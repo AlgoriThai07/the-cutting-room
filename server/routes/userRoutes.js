@@ -10,7 +10,8 @@ const {
     getFriends,
     getProfile,
     getMe,
-    updateProfile
+    updateProfile,
+    searchUserByEmail
 } = require('../controllers/userController');
 
 // All routes are protected
@@ -24,6 +25,9 @@ router.put('/me', updateProfile);
 
 // GET /api/users/friends - Get friends list
 router.get('/friends', getFriends);
+
+// GET /api/users/search - Search user by email
+router.get('/search', searchUserByEmail);
 
 // GET /api/users/requests - Get pending friend requests
 router.get('/requests', getPendingRequests);

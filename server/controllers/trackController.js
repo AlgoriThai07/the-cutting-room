@@ -238,7 +238,11 @@ const concludeTrack = async (req, res) => {
  */
 const getCommunityTracks = async (req, res) => {
     try {
-        const tracks = await Track.find({ status: 'completed' })
+        const userId = req.user.id;
+        const tracks = await Track.find({
+            concluded: true,
+            user_id: { $ne: userId }
+        })
             .sort({ created_at: -1 })
             .limit(20)
             .populate('user_id', 'username avatar') // distinct from ownerId mapping

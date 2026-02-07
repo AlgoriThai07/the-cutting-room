@@ -1,106 +1,158 @@
 import { create } from 'zustand'
-import api from '@/services/api'
-import type { User } from '@/types/index' // Assuming User type exists or I need to define it
+import api from '@/services/api.ts'
+
+export interface Friend {
+  id: string
+  username: string
+  email: string
+  avatar: string
+}
+
+export interface Notification {
+  _id: string
+  type: 'like' | 'friend_request' | 'friend_accepted'
+  from_user_id: {
+    _id: string
+    username: string
+    avatar: string
+  }
+  node_id?: {
+    _id: string
+    recap_sentence: string
+  }
+  read: boolean
+  created_at: string
+}
 
 interface SocialState {
-  friends: User[]
-  pendingRequests: {
-    received: User[]
-    sent: User[]
-  }
-  searchResults: User[]
+  friends: Friend[]
+  friendRequests: any[] // simplify for now
+  notifications: Notification[]
+  unreadCount: number
+  searchResults: Friend | null
   isLoading: boolean
   error: string | null
 
+  searchUser: (email: string) => Promise<void>
+  clearSearch: () => void
   fetchFriends: () => Promise<void>
-  fetchPendingRequests: () => Promise<void>
-  searchUsers: (query: string) => Promise<void>
-  sendFriendRequest: (userId: string) => Promise<void>
-  acceptFriendRequest: (userId: string) => Promise<void>
-  rejectFriendRequest: (userId: string) => Promise<void>
-  removeFriend: (userId: string) => Promise<void>
+  fetchNotifications: () => Promise<void>
+  sendFriendRequest: (userId: string) => Promise<boolean>
+  acceptFriendRequest: (userId: string) => Promise<boolean>
+  markRead: (id: string) => Promise<void>
+  markAllRead: () => Promise<void>
 }
 
-export const useSocialStore = create<SocialState>((set) => ({
+export const useSocialStore = create<SocialState>((set, get) => ({
   friends: [],
-  pendingRequests: { received: [], sent: [] },
-  searchResults: [],
+  friendRequests: [],
+  notifications: [],
+  unreadCount: 0,
+  searchResults: null,
   isLoading: false,
   error: null,
 
-  fetchFriends: async () => {
-    set({ isLoading: true })
+  searchUser: async (email: string) => {
+    set({ isLoading: true, error: null, searchResults: null })
     try {
-      const res = await api.client.get('/users/friends')
-      set({ friends: res.data.friends || [] })
-    } catch (err) {
-      console.error('Fetch friends error', err)
-      set({ error: 'Failed to fetch friends' })
+      const response = await api.searchUser(email)
+      // Map response to Friend interface
+      const user = {
+        id: response.data._id,
+        username: response.data.username,
+        email: response.data.email,
+        avatar: response.data.avatar
+      }
+      set({ searchResults: user })
+    } catch (err: any) {
+      set({ error: err.response?.data?.message || 'User not found' })
     } finally {
       set({ isLoading: false })
     }
   },
 
-  fetchPendingRequests: async () => {
+  clearSearch: () => set({ searchResults: null, error: null }),
+
+  fetchFriends: async () => {
+    set({ isLoading: true })
     try {
-      const res = await api.client.get('/users/requests')
-      set({ pendingRequests: res.data })
+      const response = await api.getFriends()
+      const friends = response.data.friends.map((f: any) => ({
+        id: f._id,
+        username: f.username,
+        email: f.email,
+        avatar: f.avatar
+      }))
+      set({ friends })
     } catch (err) {
-      console.error('Fetch requests error', err)
+      console.error('Failed to fetch friends', err)
+    } finally {
+      set({ isLoading: false })
     }
   },
 
-  searchUsers: async (query: string) => {
-      // NOTE: We don't have a search endpoint yet in userController. 
-      // For now, this will be a placeholder or we need to add it.
-      // Assuming we adding a search endpoint or just mocking it for now?
-      // actually, let's strictly stick to what we have. 
-      // User didn't ask for search explicitly in the plan, but FriendsPage has "Find Friends".
-      // I'll leave this empty or basic for now until I add the endpoint.
-      console.warn("Search API not implemented yet")
+  fetchNotifications: async () => {
+    try {
+      const response = await api.getNotifications()
+      set({
+        notifications: response.data.notifications,
+        unreadCount: response.data.unread_count
+      })
+    } catch (err) {
+      console.error('Failed to fetch notifications', err)
+    }
   },
 
   sendFriendRequest: async (userId: string) => {
+    set({ isLoading: true })
     try {
-      await api.client.post(`/users/${userId}/request`)
-      // Optimistic or refetch?
-      // Refetch requests
-      // get().fetchPendingRequests()
-    } catch (err) {
-      console.error('Send request error', err)
-      throw err;
+      await api.sendFriendRequest(userId)
+      return true
+    } catch (err: any) {
+      set({ error: err.response?.data?.message || 'Failed to send request' })
+      return false
+    } finally {
+      set({ isLoading: false })
     }
   },
 
   acceptFriendRequest: async (userId: string) => {
-     try {
-      await api.client.post(`/users/requests/${userId}/accept`)
-      // Refresh friends and requests
-      // get().fetchFriends()
-      // get().fetchPendingRequests()
+    try {
+      await api.acceptFriendRequest(userId)
+      // Refresh notifications and friends
+      get().fetchNotifications()
+      get().fetchFriends()
+      return true
     } catch (err) {
-      console.error('Accept request error', err)
-      throw err;
+      console.error(err)
+      return false
     }
   },
 
-  rejectFriendRequest: async (userId: string) => {
-     try {
-      await api.client.delete(`/users/requests/${userId}`)
+  markRead: async (id: string) => {
+    try {
+      await api.markNotificationRead(id)
+      // Optimistic update
+      set(state => ({
+        notifications: state.notifications.map(n =>
+          n._id === id ? { ...n, read: true } : n
+        ),
+        unreadCount: Math.max(0, state.unreadCount - 1)
+      }))
     } catch (err) {
-      console.error('Reject request error', err)
-      throw err;
+      console.error(err)
     }
   },
 
-  removeFriend: async (userId: string) => {
-     try {
-      await api.client.delete(`/users/${userId}/friend`)
-       // Refresh
-       // get().fetchFriends()
+  markAllRead: async () => {
+    try {
+      await api.markAllNotificationsRead()
+      set(state => ({
+        notifications: state.notifications.map(n => ({ ...n, read: true })),
+        unreadCount: 0
+      }))
     } catch (err) {
-       console.error('Remove friend error', err)
-       throw err;
+      console.error(err)
     }
   }
 }))

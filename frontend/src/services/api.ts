@@ -50,6 +50,20 @@ const api = {
   }),
   getUserItems: (userId: string) => axiosInstance.get(`/items/user/${userId}`),
   getUserNodes: (userId: string) => axiosInstance.get(`/nodes/user/${userId}`),
+
+  // Social
+  searchUser: (email: string) => axiosInstance.get(`/users/search?email=${encodeURIComponent(email)}`),
+  getFriends: () => axiosInstance.get('/users/friends'),
+  getFriendRequests: () => axiosInstance.get('/users/requests'),
+  sendFriendRequest: (userId: string) => axiosInstance.post(`/users/${userId}/request`),
+  acceptFriendRequest: (userId: string) => axiosInstance.post(`/users/requests/${userId}/accept`),
+  rejectFriendRequest: (userId: string) => axiosInstance.delete(`/users/requests/${userId}`),
+  removeFriend: (userId: string) => axiosInstance.delete(`/users/${userId}/friend`),
+
+  // Notifications
+  getNotifications: (unreadOnly = false) => axiosInstance.get(`/notifications?unread_only=${unreadOnly}`),
+  markNotificationRead: (id: string) => axiosInstance.put(`/notifications/${id}/read`),
+  markAllNotificationsRead: () => axiosInstance.put('/notifications/read-all'),
 }
 
 export default api;
