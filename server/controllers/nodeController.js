@@ -1,6 +1,5 @@
 const Node = require('../models/Node');
 const Track = require('../models/Track');
-const modelApi = require('../services/modelApi');
 
 /**
  * Get ISO week string (e.g., "2026-W06")
@@ -15,35 +14,24 @@ const getWeekId = (date = new Date()) => {
 };
 
 /**
- * Create a node
+ * Create a node (direct — used for manual/admin creation)
  * POST /api/nodes
- * Body: { similar_item_ids: [...], recap_sentence? }
+ * Body: { user_item_id, similar_item_ids: [...], recap_sentence? }
+ * 
+ * NOTE: Normal node creation happens automatically via the item upload
+ * pipeline in itemController. This endpoint is for edge cases only.
  */
 const createNode = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { similar_item_ids, recap_sentence } = req.body;
+        const { user_item_id, similar_item_ids, recap_sentence } = req.body;
+
+        if (!user_item_id) {
+            return res.status(400).json({ message: 'user_item_id is required' });
+        }
 
         if (!similar_item_ids || !Array.isArray(similar_item_ids) || similar_item_ids.length === 0) {
             return res.status(400).json({ message: 'similar_item_ids is required and must be a non-empty array' });
-        }
-
-        // Check daily limit (3 nodes per day)
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-
-        const todayCount = await Node.countDocuments({
-            user_id: userId,
-            created_at: { $gte: today, $lt: tomorrow }
-        });
-
-        if (todayCount >= 3) {
-            return res.status(429).json({
-                message: `Daily limit reached. You can create ${3 - todayCount} more nodes today.`,
-                remaining: 3 - todayCount
-            });
         }
 
         const weekId = getWeekId();
@@ -54,6 +42,7 @@ const createNode = async (req, res) => {
 
         const node = await Node.create({
             user_id: userId,
+            user_item_id,
             previous_node_id: previousNode ? previousNode._id : null,
             similar_item_ids,
             recap_sentence: recap_sentence || null,
@@ -61,7 +50,7 @@ const createNode = async (req, res) => {
         });
 
         // Add node to current week's track (create if needed)
-        let track = await Track.findOne({ user_id: userId, week_id: weekId });
+        let track = await Track.findOne({ user_id: userId, week_id: weekId, concluded: false });
         if (!track) {
             track = await Track.create({
                 user_id: userId,
@@ -71,15 +60,6 @@ const createNode = async (req, res) => {
         } else {
             track.node_ids.push(node._id);
             await track.save();
-        }
-
-        // Fire-and-forget: Generate recap if not provided
-        if (!recap_sentence) {
-            modelApi.generateRecap(node).then(async (recap) => {
-                if (recap) {
-                    await Node.findByIdAndUpdate(node._id, { recap_sentence: recap });
-                }
-            }).catch(console.error);
         }
 
         res.status(201).json({
@@ -101,6 +81,7 @@ const getNode = async (req, res) => {
     try {
         const node = await Node.findById(req.params.id)
             .populate('user_id', 'username avatar')
+            .populate('user_item_id')
             .populate('previous_node_id')
             .populate('similar_item_ids');
 
@@ -154,8 +135,9 @@ const updateNode = async (req, res) => {
             return res.status(403).json({ message: 'Not authorized to update this node' });
         }
 
-        const { similar_item_ids, recap_sentence } = req.body;
+        const { user_item_id, similar_item_ids, recap_sentence } = req.body;
 
+        if (user_item_id !== undefined) node.user_item_id = user_item_id;
         if (similar_item_ids !== undefined) node.similar_item_ids = similar_item_ids;
         if (recap_sentence !== undefined) node.recap_sentence = recap_sentence;
 

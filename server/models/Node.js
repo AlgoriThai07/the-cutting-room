@@ -6,6 +6,11 @@ const nodeSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    user_item_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Item',
+        required: true
+    },
     previous_node_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Node',

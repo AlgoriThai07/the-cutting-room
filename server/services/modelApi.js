@@ -1,60 +1,137 @@
 /**
- * Model API Service (Stub)
+ * Model API Service
  * 
- * This service communicates with the external Model Team's API.
- * Currently stubbed - will be implemented when Model Team provides endpoints.
+ * Thin client for the Python ML microservice (FastAPI on port 8000).
+ * The ML service handles ONLY: image parsing, text embedding, vector search,
+ * and LLM text generation.
+ * 
+ * All orchestration (item storage, node creation, track management, daily
+ * limits, auto-conclude) lives in the Node.js controllers.
  */
 
 const MODEL_API_URL = process.env.MODEL_API_URL || 'http://localhost:8000';
 
-/**
- * Generate embedding vector for content
- * @param {string} content - Text content to embed
- * @returns {Promise<number[]>} - Embedding vector
- */
-const generateEmbedding = async (content) => {
-    // TODO: Call Model Team API
-    // POST ${MODEL_API_URL}/embed
-    // Body: { text: content }
-    // Returns: { embedding: [...] }
+const fetch = require('node-fetch');
+const FormData = require('form-data');
 
-    console.log('[ModelAPI] generateEmbedding called (stub)');
-    return []; // Empty array for now
+/**
+ * Parse an image → get description + embedding. No DB writes.
+ * @param {Buffer} imageBuffer
+ * @param {string} filename
+ * @returns {Promise<{description: string, embedding: number[]}>}
+ */
+const parseImage = async (imageBuffer, filename) => {
+    const form = new FormData();
+    form.append('file', imageBuffer, { filename });
+
+    const res = await fetch(`${MODEL_API_URL}/api/ml/parse-image`, {
+        method: 'POST',
+        body: form,
+        headers: form.getHeaders()
+    });
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`ML parse-image error: ${res.status} - ${errorText}`);
+    }
+    return res.json();
 };
 
 /**
- * Generate recap sentence for a node
- * @param {Object} node - Node document
- * @returns {Promise<string|null>} - Recap sentence
+ * Parse text → get embedding. No DB writes.
+ * @param {string} text
+ * @returns {Promise<{text: string, embedding: number[]}>}
  */
-const generateRecap = async (node) => {
-    // TODO: Call Model Team API
-    // POST ${MODEL_API_URL}/recap
-    // Body: { content, previous_similarity, neighbor_context }
-    // Returns: { recap: "..." }
+const parseText = async (text) => {
+    const res = await fetch(`${MODEL_API_URL}/api/ml/parse-text`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+    });
 
-    console.log('[ModelAPI] generateRecap called (stub)');
-    return null; // No recap for now
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`ML parse-text error: ${res.status} - ${errorText}`);
+    }
+    return res.json();
 };
 
 /**
- * Find similar nodes using kNN
- * @param {number[]} embedding - Embedding vector
- * @param {number} k - Number of neighbors
- * @returns {Promise<string[]>} - Array of node IDs
+ * Vector search for similar items from other users.
+ * @param {number[]} embedding
+ * @param {string} userId - current user's ID (to exclude)
+ * @param {number} [limit=3]
+ * @param {string[]} [excludeItemIds=[]] - item IDs already paired with this user
+ * @returns {Promise<{similar_items: Object[]}>}
  */
-const findNeighbors = async (embedding, k = 5) => {
-    // TODO: Call Model Team API
-    // POST ${MODEL_API_URL}/neighbors
-    // Body: { embedding, k }
-    // Returns: { neighbors: ["id1", "id2", ...] }
+const vectorSearch = async (embedding, userId, limit = 3, excludeItemIds = []) => {
+    const res = await fetch(`${MODEL_API_URL}/api/ml/vector-search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            embedding,
+            user_id: userId,
+            limit,
+            exclude_item_ids: excludeItemIds
+        })
+    });
 
-    console.log('[ModelAPI] findNeighbors called (stub)');
-    return []; // No neighbors for now
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`ML vector-search error: ${res.status} - ${errorText}`);
+    }
+    return res.json();
+};
+
+/**
+ * Generate a recap sentence for a node via LLM.
+ * @param {string} userItemDescription
+ * @param {string[]} similarItemDescriptions
+ * @param {string} [storySoFar='']
+ * @returns {Promise<{recap_sentence: string}>}
+ */
+const generateRecap = async (userItemDescription, similarItemDescriptions, storySoFar = '') => {
+    const res = await fetch(`${MODEL_API_URL}/api/ml/generate-recap`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            user_item_description: userItemDescription,
+            similar_item_descriptions: similarItemDescriptions,
+            story_so_far: storySoFar
+        })
+    });
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`ML generate-recap error: ${res.status} - ${errorText}`);
+    }
+    return res.json();
+};
+
+/**
+ * Generate a track conclusion + community reflection via LLM.
+ * @param {string} story - the track's accumulated story
+ * @param {string[]} [similarStories=[]] - other users' stories for community reflection
+ * @returns {Promise<{conclusion: string, community_reflection: string}>}
+ */
+const generateConclusion = async (story, similarStories = []) => {
+    const res = await fetch(`${MODEL_API_URL}/api/ml/generate-conclusion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ story, similar_stories: similarStories })
+    });
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`ML generate-conclusion error: ${res.status} - ${errorText}`);
+    }
+    return res.json();
 };
 
 module.exports = {
-    generateEmbedding,
+    parseImage,
+    parseText,
+    vectorSearch,
     generateRecap,
-    findNeighbors
+    generateConclusion
 };

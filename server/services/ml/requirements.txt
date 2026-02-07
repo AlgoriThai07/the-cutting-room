@@ -1,0 +1,7 @@
+google-genai
+pillow
+python-dotenv
+pymongo[srv]
+fastapi
+uvicorn
+python-multipart

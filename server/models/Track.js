@@ -14,6 +14,14 @@ const trackSchema = new mongoose.Schema({
         type: String,
         default: null
     },
+    community_reflection: {
+        type: String,
+        default: ''
+    },
+    concluded: {
+        type: Boolean,
+        default: false
+    },
     week_id: {
         type: String, // e.g., "2026-W06"
         required: true

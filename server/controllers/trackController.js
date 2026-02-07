@@ -1,5 +1,6 @@
 const Node = require('../models/Node');
 const Track = require('../models/Track');
+const { concludeTrackInternal } = require('./itemController');
 
 /**
  * Get ISO week string (e.g., "2026-W06")
@@ -25,7 +26,10 @@ const getCurrentTrack = async (req, res) => {
         let track = await Track.findOne({ user_id: userId, week_id: weekId })
             .populate({
                 path: 'node_ids',
-                populate: { path: 'similar_item_ids' },
+                populate: [
+                    { path: 'user_item_id' },
+                    { path: 'similar_item_ids' }
+                ],
                 options: { sort: { created_at: 1 } }
             });
 
@@ -44,6 +48,8 @@ const getCurrentTrack = async (req, res) => {
             week_id: track.week_id,
             nodes: track.node_ids,
             story: track.story,
+            community_reflection: track.community_reflection,
+            concluded: track.concluded,
             created_at: track.created_at
         });
 
@@ -62,7 +68,10 @@ const getTrack = async (req, res) => {
         const track = await Track.findById(req.params.id)
             .populate({
                 path: 'node_ids',
-                populate: { path: 'similar_item_ids' }
+                populate: [
+                    { path: 'user_item_id' },
+                    { path: 'similar_item_ids' }
+                ]
             });
 
         if (!track) {
@@ -93,6 +102,8 @@ const getWeeklyStory = async (req, res) => {
             track_id: track._id,
             week_id: track.week_id,
             story: track.story || 'Story not yet generated. Check back at the end of the week!',
+            community_reflection: track.community_reflection || null,
+            concluded: track.concluded || false,
             created_at: track.created_at
         });
 
@@ -120,9 +131,11 @@ const updateTrack = async (req, res) => {
             return res.status(403).json({ message: 'Not authorized to update this track' });
         }
 
-        const { story } = req.body;
+        const { story, community_reflection, concluded } = req.body;
 
         if (story !== undefined) track.story = story;
+        if (community_reflection !== undefined) track.community_reflection = community_reflection;
+        if (concluded !== undefined) track.concluded = concluded;
 
         const updatedTrack = await track.save();
         res.json(updatedTrack);
@@ -180,11 +193,51 @@ const deleteTrack = async (req, res) => {
     }
 };
 
+/**
+ * Conclude a track (user-initiated or end of week)
+ * POST /api/tracks/:id/conclude
+ * Uses shared concludeTrackInternal which calls ML for text generation
+ */
+const concludeTrack = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const track = await Track.findById(req.params.id);
+
+        if (!track) {
+            return res.status(404).json({ message: 'Track not found' });
+        }
+
+        if (track.user_id.toString() !== userId) {
+            return res.status(403).json({ message: 'Not authorized to conclude this track' });
+        }
+
+        if (track.concluded) {
+            return res.status(400).json({ message: 'Track is already concluded' });
+        }
+
+        if (!track.story && track.node_ids.length === 0) {
+            return res.status(400).json({ message: 'Cannot conclude a track with no content' });
+        }
+
+        await concludeTrackInternal(track);
+
+        res.json({
+            message: 'Track concluded successfully',
+            track
+        });
+
+    } catch (error) {
+        console.error('concludeTrack error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 module.exports = {
     getCurrentTrack,
     getTrack,
     getWeeklyStory,
     updateTrack,
     getTrackHistory,
+    concludeTrack,
     deleteTrack
 };

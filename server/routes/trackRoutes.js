@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
-const { getCurrentTrack, getTrack, getWeeklyStory, updateTrack, getTrackHistory, deleteTrack } = require('../controllers/trackController');
+const { getCurrentTrack, getTrack, getWeeklyStory, updateTrack, getTrackHistory, concludeTrack, deleteTrack } = require('../controllers/trackController');
 
 // All routes are protected
 router.use(authMiddleware);
@@ -17,6 +17,9 @@ router.get('/:id', getTrack);
 
 // GET /api/tracks/:id/story - Get weekly story
 router.get('/:id/story', getWeeklyStory);
+
+// POST /api/tracks/:id/conclude - Conclude a track (end of week)
+router.post('/:id/conclude', concludeTrack);
 
 // PUT /api/tracks/:id - Update a track
 router.put('/:id', updateTrack);

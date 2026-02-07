@@ -18,9 +18,11 @@
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
+    "form-data": "^4.0.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.22.1",
     "multer": "^2.0.2",
+    "node-fetch": "^2.7.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0"
   },
