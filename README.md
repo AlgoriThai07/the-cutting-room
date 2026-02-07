@@ -46,6 +46,10 @@ Minh Khoa Cao
 Hoang Minh Nguyen
 ```
 ---
+## Tech Stack
+```
+react, express.js, node.js, venv, python, python-package-index, mongodb, figma, canva, aedify.ai
+```
 
 ## Live Demo Instruction
 
