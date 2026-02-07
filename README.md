@@ -14,6 +14,7 @@ A reflective storytelling system that converts weekly user activity into structu
 
 # Operation
 <img width="1560" height="1034" alt="image" src="https://github.com/user-attachments/assets/55f96a38-12a4-4247-8d70-630f33b1663b" />
+
 <img width="972" height="1096" alt="image" src="https://github.com/user-attachments/assets/5200f60e-5041-4fa0-9a04-5f04cf802e65" />
 
 <details>
