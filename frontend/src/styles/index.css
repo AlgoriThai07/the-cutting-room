@@ -583,10 +583,14 @@ body {
 /* =============================================
    UPLOAD MODAL
    ============================================= */
+/* =============================================
+   UPLOAD MODAL
+   ============================================= */
 .upload-modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgb(0 0 0 / 0.6);
+  background-color: rgb(0 0 0 / 0.85);
+  /* Darker overlay for focus */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -595,14 +599,17 @@ body {
 }
 
 .upload-modal-panel {
-  background-color: var(--charcoal);
-  border: 1px solid var(--charcoal-border);
-  border-radius: 16px;
+  background-color: #000;
+  /* Pure black */
+  border: 1px solid #333;
+  /* Dark gray border */
+  border-radius: 12px;
   width: min(440px, 100%);
   padding: clamp(1.5rem, 3vw, 2rem);
   display: flex;
   flex-direction: column;
   gap: clamp(1.25rem, 2vw, 1.75rem);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
 }
 
 .upload-modal-section {
@@ -612,127 +619,136 @@ body {
 }
 
 .upload-modal-label {
-  color: var(--off-white);
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-color: var(--mid-gray);
-  --fl: 1;
+  color: #888;
+  font-family: var(--font-hand);
+  font-weight: 400;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  /* Removed underline */
 }
 
 .upload-modal-hint {
   font-weight: 400;
-  color: var(--mid-gray-light);
-  --fl: -1;
+  color: #555;
+  font-size: 0.8rem;
+  font-style: italic;
 }
 
 .upload-modal-file-input {
   display: none;
 }
 
-/* Visual dropzone */
-.upload-dropzone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: clamp(1.5rem, 4vw, 2.5rem) 1rem;
-  border: 2px dashed var(--charcoal-border);
-  border-radius: 12px;
-  background-color: var(--charcoal-light);
+/* New Upload Link Style (Minimal) */
+.upload-modal-upload-link {
+  background: none;
+  border: none;
+  color: #fff;
+  font-family: var(--font-hand);
+  font-size: 1rem;
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  text-align: left;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: #444;
+  transition: all 0.2s ease;
+  width: fit-content;
 }
 
-.upload-dropzone:hover {
-  border-color: var(--mid-gray);
-  background-color: rgb(from var(--charcoal-light) r g b / 0.7);
+.upload-modal-upload-link:hover {
+  color: #ddd;
+  text-decoration-color: #888;
 }
 
-.upload-dropzone-active {
-  border-color: var(--off-white);
-  background-color: rgb(255 255 255 / 0.05);
-}
-
-.upload-dropzone-text {
-  color: var(--off-white);
-  --fl: 0;
-}
-
-.upload-dropzone-hint {
-  color: var(--mid-gray);
-  --fl: -1;
-}
-
-/* Preview state: "Change photo" overlay button */
+/* Preview Image */
 .upload-modal-preview {
   border-radius: 8px;
   overflow: hidden;
-  margin-top: 0.25rem;
-  position: relative;
+  margin-top: 0.5rem;
+  border: 1px solid #333;
 }
 
 .upload-modal-preview img {
   width: 100%;
   display: block;
-  border-radius: 8px;
-  max-height: 200px;
-  object-fit: cover;
-}
-
-.upload-modal-change-btn {
-  position: absolute;
-  bottom: 0.5rem;
-  right: 0.5rem;
-  background-color: rgb(0 0 0 / 0.6);
-  color: var(--off-white);
-  border: 1px solid var(--charcoal-border);
-  border-radius: 6px;
-  padding: 0.25rem 0.75rem;
-  cursor: pointer;
-  --fl: -1;
-  transition: background-color 0.15s ease;
-}
-
-.upload-modal-change-btn:hover {
-  background-color: rgb(0 0 0 / 0.8);
+  max-height: 240px;
+  object-fit: contain;
+  /* Ensure whole image is visible */
+  background-color: #111;
 }
 
 .upload-modal-filename {
-  color: var(--mid-gray-light);
-  --fl: -1;
-  word-break: break-all;
+  color: #666;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  font-family: var(--font-body);
 }
 
 .upload-modal-textarea {
-  background-color: var(--charcoal-light);
-  border: 1px solid var(--charcoal-border);
+  background-color: #0a0a0a;
+  border: 1px solid #333;
   border-radius: 8px;
-  color: var(--off-white);
+  color: #eee;
   padding: 0.75rem;
-  resize: vertical;
+  resize: none;
   min-height: 90px;
-  --fl: 0;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
   line-height: 1.5;
-  transition: border-color 0.15s ease;
-}
-
-.upload-modal-textarea::placeholder {
-  color: var(--mid-gray);
+  transition: border-color 0.2s ease;
 }
 
 .upload-modal-textarea:focus {
   outline: none;
-  border-color: var(--mid-gray-light);
+  border-color: #666;
 }
 
 .upload-modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  padding-top: 0.75rem;
-  border-top: 1px dashed var(--charcoal-border);
+  margin-top: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #222;
+  /* Minimal separator */
+}
+
+/* Minimal Buttons */
+.upload-modal-btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: #888;
+  padding: 8px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-hand);
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.upload-modal-btn:hover {
+  border-color: #666;
+  color: #ccc;
+}
+
+.upload-modal-btn-save {
+  background-color: #fff;
+  border-color: #fff;
+  color: #000;
+  font-weight: 600;
+}
+
+.upload-modal-btn-save:hover {
+  background-color: #ddd;
+  border-color: #ddd;
+}
+
+.upload-modal-btn-save:disabled {
+  background-color: #333;
+  border-color: #333;
+  color: #666;
+  cursor: not-allowed;
 }
 
 /* =============================================
@@ -753,8 +769,8 @@ body {
   background-color: var(--charcoal);
   border: 1px solid var(--charcoal-border);
   border-radius: 16px;
-  width: min(400px, 100%);
-  padding: clamp(2rem, 4vw, 3rem);
+  width: min(360px, 90%);
+  padding: clamp(1.5rem, 3vw, 2rem);
   position: relative;
 }
 
@@ -766,7 +782,7 @@ body {
   border: none;
   color: var(--mid-gray-light);
   cursor: pointer;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   line-height: 1;
   transition: color 0.15s ease;
 }
@@ -777,36 +793,39 @@ body {
 
 .signin-modal-title {
   color: var(--off-white);
-  --fl: 3;
-  margin-bottom: 0.5rem;
+  --fl: 2;
+  margin-bottom: 0.25rem;
+  font-size: 1.5rem;
 }
 
 .signin-modal-subtitle {
   color: var(--warm-white);
   opacity: 0.7;
-  --fl: -1;
-  margin-bottom: clamp(1.5rem, 3vw, 2rem);
+  --fl: -2;
+  margin-bottom: clamp(1rem, 2vw, 1.5rem);
+  font-size: 0.875rem;
 }
 
 .signin-modal-form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .signin-modal-field {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.25rem;
 }
 
 .signin-modal-label {
   color: var(--off-white);
-  --fl: 0;
+  --fl: -1;
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 4px;
   text-decoration-color: var(--mid-gray);
+  font-size: 0.875rem;
 }
 
 .signin-modal-input {
@@ -814,8 +833,9 @@ body {
   border: 1px solid var(--charcoal-border);
   border-radius: 8px;
   color: var(--off-white);
-  padding: 0.6rem 0.75rem;
-  --fl: 0;
+  padding: 0.5rem 0.75rem;
+  --fl: -1;
+  font-size: 0.9rem;
   transition: border-color 0.15s ease;
 }
 
@@ -826,12 +846,13 @@ body {
 
 .signin-modal-error {
   color: #d45a5a;
-  --fl: -1;
+  --fl: -2;
+  font-size: 0.8rem;
 }
 
 .signin-modal-submit {
   align-self: flex-start;
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 /* Sign-in modal buttons — full-width to match form inputs */
@@ -844,6 +865,8 @@ body {
 .signin-modal-form .btn-gradient>span,
 .signin-modal-panel>.btn-gradient>span {
   width: 100%;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
 }
 
 /* Google sign-in button — icon + text layout */
@@ -852,6 +875,8 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
 }
 
 /* OR divider */
@@ -1660,6 +1685,7 @@ body {
   color: var(--mid-gray-light);
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1682,9 +1708,11 @@ body {
    ============================================= */
 .toast-container {
   position: fixed;
-  top: clamp(1rem, 2vw, 1.5rem);
+  top: clamp(5rem, 8vw, 6rem);
+  /* Moved down to avoid header */
   right: clamp(1rem, 2vw, 1.5rem);
-  z-index: 10001;
+  z-index: 10002;
+  /* Higher than NotificationPopover */
 }
 
 .toast-panel {
@@ -1777,6 +1805,7 @@ body {
   from {
     transform: translateX(0%);
   }
+
   to {
     transform: translateX(-100%);
   }
@@ -2062,4 +2091,184 @@ body {
   border: none;
   cursor: pointer;
   padding: 0;
+}
+
+/* =============================================
+   NOTIFICATION POPOVER
+   ============================================= */
+.nav-item-notif {
+  position: relative;
+  display: flex !important;
+  align-items: center;
+}
+
+.btn-icon-notif {
+  background: none;
+  border: none;
+  color: var(--off-white);
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  transition: opacity 0.2s;
+}
+
+.btn-icon-notif:hover {
+  opacity: 0.7;
+}
+
+.notif-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #d45a5a;
+  color: white;
+  font-size: 0.7rem;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.notification-popover {
+  position: absolute;
+  top: 100%;
+  right: -10px;
+  width: 320px;
+  background-color: var(--charcoal);
+  border: 1px solid var(--charcoal-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  /* Very high z-index to ensure it is on top */
+  margin-top: 0.5rem;
+  overflow: hidden;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.notif-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--charcoal-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notif-header h3 {
+  font-size: 1.1rem;
+  color: var(--off-white);
+  margin: 0;
+}
+
+.notif-header button {
+  color: var(--mid-gray-light);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.notif-header button:hover {
+  color: var(--off-white);
+  text-decoration: underline;
+}
+
+.notif-list {
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.notif-item {
+  padding: 1rem;
+  border-bottom: 1px solid var(--charcoal-border);
+  display: flex;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  position: relative;
+}
+
+.notif-item:last-child {
+  border-bottom: none;
+}
+
+.notif-item:hover {
+  background-color: var(--charcoal-light);
+}
+
+.notif-item.unread {
+  background-color: rgba(60, 119, 184, 0.1);
+}
+
+.notif-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.notif-content {
+  flex: 1;
+}
+
+.notif-text {
+  color: var(--off-white);
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+  font-size: 0.9rem;
+}
+
+.notif-time {
+  color: var(--mid-gray);
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.notif-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.notif-actions .btn-xs {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.notif-actions .btn-gradient {
+  border: none;
+  color: white;
+}
+
+.notif-actions .btn-outline {
+  background: none;
+  border: 1px solid var(--mid-gray);
+  color: var(--off-white);
+}
+
+.notif-actions .btn-outline:hover {
+  border-color: var(--off-white);
+}
+
+.notif-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #3c77b8;
+  border-radius: 50%;
+  margin-top: 0.5rem;
+}
+
+.notif-empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--mid-gray);
 }

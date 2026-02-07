@@ -23,7 +23,11 @@ const getCurrentTrack = async (req, res) => {
         const userId = req.user.id;
         const weekId = getWeekId();
 
-        let track = await Track.findOne({ user_id: userId, week_id: weekId })
+        let track = await Track.findOne({
+            user_id: userId,
+            week_id: weekId,
+            concluded: false
+        })
             .populate({
                 path: 'node_ids',
                 populate: [

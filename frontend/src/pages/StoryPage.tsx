@@ -11,7 +11,10 @@ function StoryPage() {
   const parallaxRightRef = useRef<HTMLDivElement>(null)
   const [modalOpen, setModalOpen] = useState(false)
 
-  const openModal = useCallback(() => setModalOpen(true), [])
+  const openModal = useCallback(() => {
+    console.log('Opening Upload Modal')
+    setModalOpen(true)
+  }, [])
   const closeModal = useCallback(() => setModalOpen(false), [])
 
   // Measure header height and expose as CSS variable for sticky right panel
@@ -91,11 +94,18 @@ function StoryPage() {
   const picsRemaining = 10 - (currentTrack?.nodes?.length || 0)
 
   const handleEndStory = async () => {
+    // console.log('End Story clicked', currentTrack)
     if (currentTrack?.id) {
+      // console.log('Calling concludeTrack...')
       const success = await concludeTrack(currentTrack.id)
+      // console.log('concludeTrack result:', success)
       if (success) {
+        // Refresh track status before navigating (optional but good)
+        await fetchCurrentTrack()
         navigate('/story/recap')
       }
+    } else {
+      console.error('No currentTrack ID found')
     }
   }
 
@@ -129,7 +139,7 @@ function StoryPage() {
         </div>
       </div>
 
-      <div className="story-body">{}
+      <div className="story-body">{ }
         <div className="story-left-panel">
           <h2 className="font-hand fs-xl collage-title">Your collage</h2>
 
@@ -138,7 +148,7 @@ function StoryPage() {
               Create your story now
             </div>
           ) : (
-            <div className="row parallax-section" ref={parallaxContainerRef}>{}
+            <div className="row parallax-section" ref={parallaxContainerRef}>{ }
               <div className="col-6" ref={parallaxLeftRef}>
                 {currentTrack.nodes.filter((_, i) => i % 2 === 0).map((node, i) => (
                   <motion.div
@@ -158,7 +168,7 @@ function StoryPage() {
                     <p className="caption fs-xs">{node.caption}</p>
                   </motion.div>
                 ))}
-              </div>{}
+              </div>{ }
               <div className="col-6" ref={parallaxRightRef}>
                 {currentTrack.nodes.filter((_, i) => i % 2 !== 0).map((node, i) => (
                   <motion.div
@@ -199,7 +209,7 @@ function StoryPage() {
                 <p key={i} className="fs-base">
                   {text}
                 </p>
-              ))}{}
+              ))}{ }
               {picsRemaining > 0 && (
                 <span className="blinking-dots fs-xl"> . . . </span>
               )}

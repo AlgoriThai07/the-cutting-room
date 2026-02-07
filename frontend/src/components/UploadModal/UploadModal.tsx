@@ -17,75 +17,29 @@ const panelVariants = {
   visible: { opacity: 1, y: 0, scale: 1 },
 } as const
 
-/* ── Hoisted static elements (rendering-hoist-jsx) ── */
-
-const uploadIcon = (
-  <svg
-    width="40"
-    height="40"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="#f5f5f0"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-    <polyline points="17 8 12 3 7 8" />
-    <line x1="12" y1="3" x2="12" y2="15" />
-  </svg>
-)
-
 function UploadModal({ isOpen, onClose }: UploadModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState('')
   const [caption, setCaption] = useState('')
   const [preview, setPreview] = useState<string | null>(null)
-  const [dragging, setDragging] = useState(false)
 
-  const processFile = useCallback((file: File) => {
-    setFileName(file.name)
-    const url = URL.createObjectURL(file)
-    setPreview(url)
-  }, [])
-
-  const uploadItem = useTrackStore((s) => s.uploadItem)
+  const createItem = useTrackStore((s) => s.createItem)
   const isLoading = useTrackStore((s) => s.isLoading)
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
-      if (file) processFile(file)
+      if (!file) return
+      setFileName(file.name)
+      const url = URL.createObjectURL(file)
+      setPreview(url)
     },
-    [processFile],
+    [],
   )
 
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click()
   }, [])
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setDragging(true)
-  }, [])
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setDragging(false)
-  }, [])
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      setDragging(false)
-      const file = e.dataTransfer.files[0]
-      if (file && file.type.startsWith('image/')) {
-        processFile(file)
-      }
-    },
-    [processFile],
-  )
 
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -116,7 +70,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
       description: '', // Optional
     }))
 
-    const success = await uploadItem(formData)
+    const success = await createItem(formData)
 
     if (success) {
       onClose()
@@ -127,7 +81,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
     } else {
       alert('Failed to upload. Please try again.')
     }
-  }, [onClose, preview, caption, uploadItem])
+  }, [onClose, preview, caption, createItem])
 
   const handleCancel = useCallback(() => {
     onClose()
@@ -170,36 +124,18 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                 className="upload-modal-file-input"
                 onChange={handleFileChange}
               />
-
+              <button
+                type="button"
+                className="upload-modal-upload-link font-hand"
+                onClick={handleUploadClick}
+              >
+                &bull; Upload
+              </button>
               {preview ? (
                 <div className="upload-modal-preview">
                   <img src={preview} alt={fileName} draggable={false} />
-                  <button
-                    type="button"
-                    className="upload-modal-change-btn font-hand"
-                    onClick={handleUploadClick}
-                  >
-                    Change photo
-                  </button>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  className={`upload-dropzone${dragging ? ' upload-dropzone-active' : ''}`}
-                  onClick={handleUploadClick}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                >
-                  {uploadIcon}
-                  <span className="upload-dropzone-text font-hand">
-                    Click or drag an image here
-                  </span>
-                  <span className="upload-dropzone-hint font-body">
-                    JPG, PNG, GIF, WebP
-                  </span>
-                </button>
-              )}
+              ) : null}
               {fileName ? (
                 <p className="upload-modal-filename">{fileName}</p>
               ) : null}
@@ -223,14 +159,14 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
             <div className="upload-modal-footer">
               <button
                 type="button"
-                className="btn-gradient btn-studio"
+                className="upload-modal-btn font-hand"
                 onClick={handleCancel}
               >
-                <span>Cancel</span>
+                Cancel
               </button>
               <button
                 type="button"
-                className="btn-gradient btn-upload"
+                className="upload-modal-btn upload-modal-btn-save font-hand"
                 onClick={handleSave}
                 disabled={isLoading}
               >

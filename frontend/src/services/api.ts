@@ -53,6 +53,7 @@ const api = {
 
   // Social
   searchUser: (email: string) => axiosInstance.get(`/users/search?email=${encodeURIComponent(email)}`),
+  getUserById: (id: string) => axiosInstance.get(`/users/${id}`),
   getFriends: () => axiosInstance.get('/users/friends'),
   getFriendRequests: () => axiosInstance.get('/users/requests'),
   sendFriendRequest: (userId: string) => axiosInstance.post(`/users/${userId}/request`),
@@ -64,6 +65,7 @@ const api = {
   getNotifications: (unreadOnly = false) => axiosInstance.get(`/notifications?unread_only=${unreadOnly}`),
   markNotificationRead: (id: string) => axiosInstance.put(`/notifications/${id}/read`),
   markAllNotificationsRead: () => axiosInstance.put('/notifications/read-all'),
+  deleteNotification: (id: string) => axiosInstance.delete(`/notifications/${id}`),
 }
 
 export default api;

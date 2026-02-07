@@ -1,7 +1,8 @@
 import { useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Link } from 'react-router-dom'
 import { useSocialStore } from '@/store/socialStore.ts'
+import { Link } from 'react-router-dom'
+import { formatDistanceToNow } from 'date-fns'
 
 interface NotificationPopoverProps {
     isOpen: boolean
@@ -10,22 +11,17 @@ interface NotificationPopoverProps {
 
 function NotificationPopover({ isOpen, onClose }: NotificationPopoverProps) {
     const popoverRef = useRef<HTMLDivElement>(null)
-
     const notifications = useSocialStore((s) => s.notifications)
-    const fetchNotifications = useSocialStore((s) => s.fetchNotifications)
     const markRead = useSocialStore((s) => s.markRead)
     const markAllRead = useSocialStore((s) => s.markAllRead)
     const acceptFriendRequest = useSocialStore((s) => s.acceptFriendRequest)
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchNotifications()
-        }
-    }, [isOpen, fetchNotifications])
+    const rejectFriendRequest = useSocialStore((s) => s.rejectFriendRequest)
+    const deleteNotification = useSocialStore((s) => s.deleteNotification)
 
-    // Close when clicking outside
+    // Close on outside click
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
+        function handleClickOutside(event: MouseEvent) {
             if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
                 onClose()
             }
@@ -39,12 +35,23 @@ function NotificationPopover({ isOpen, onClose }: NotificationPopoverProps) {
         }
     }, [isOpen, onClose])
 
-    const handleMarkAllRead = async () => {
-        await markAllRead()
+    const handleAccept = async (userId: string, notifId: string) => {
+        const success = await acceptFriendRequest(userId)
+        if (success) {
+            await deleteNotification(notifId)
+        }
     }
 
-    const handleAccept = async (userId: string, notifId: string) => {
-        await acceptFriendRequest(userId)
+    const handleReject = async (userId: string, notifId: string) => {
+        const success = await rejectFriendRequest(userId)
+        if (success) {
+            await deleteNotification(notifId)
+        }
+    }
+
+    const handleMarkRead = async (e: React.MouseEvent, notifId: string) => {
+        e.preventDefault()
+        e.stopPropagation()
         await markRead(notifId)
     }
 
@@ -52,8 +59,8 @@ function NotificationPopover({ isOpen, onClose }: NotificationPopoverProps) {
         <AnimatePresence>
             {isOpen && (
                 <motion.div
-                    ref={popoverRef}
                     className="notification-popover"
+                    ref={popoverRef}
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -62,10 +69,7 @@ function NotificationPopover({ isOpen, onClose }: NotificationPopoverProps) {
                     <div className="notif-header">
                         <h3 className="font-hand">Notifications</h3>
                         {notifications.length > 0 && (
-                            <button
-                                onClick={handleMarkAllRead}
-                                className="btn-text fs-xs"
-                            >
+                            <button className="fs-xs" onClick={() => markAllRead()}>
                                 Mark all read
                             </button>
                         )}
@@ -73,52 +77,72 @@ function NotificationPopover({ isOpen, onClose }: NotificationPopoverProps) {
 
                     <div className="notif-list">
                         {notifications.length === 0 ? (
-                            <p className="notif-empty fs-s">No notifications yet.</p>
+                            <div className="notif-empty fs-s">No notifications</div>
                         ) : (
-                            notifications.map((notif) => (
+                            notifications.map((notif: any) => (
                                 <div
                                     key={notif._id}
                                     className={`notif-item ${!notif.read ? 'unread' : ''}`}
                                     onClick={() => !notif.read && markRead(notif._id)}
                                 >
                                     <img
-                                        src={notif.from_user_id.avatar || `https://api.dicebear.com/7.x/shapes/svg?seed=${notif.from_user_id.username}`}
-                                        alt={notif.from_user_id.username}
+                                        src={notif.from_user_id?.avatar || `https://api.dicebear.com/7.x/shapes/svg?seed=${notif.from_user_id?.username}`}
+                                        alt="Avatar"
                                         className="notif-avatar"
                                     />
                                     <div className="notif-content">
-                                        <p className="notif-text fs-s">
-                                            <span className="font-bold">{notif.from_user_id.username}</span>
-                                            {notif.type === 'friend_request' && ' sent you a friend request.'}
-                                            {notif.type === 'friend_accepted' && ' accepted your friend request.'}
-                                            {notif.type === 'like' && ' liked your story.'}
+                                        <p className="notif-text">
+                                            <span className="font-bold">{notif.from_user_id?.username}</span>{' '}
+                                            {notif.type === 'like' && 'liked your post'}
+                                            {notif.type === 'friend_request' && 'sent you a friend request'}
+                                            {notif.type === 'friend_accepted' && 'accepted your friend request'}
                                         </p>
-                                        <span className="notif-time fs-xs">
-                                            {new Date(notif.created_at).toLocaleDateString()}
-                                        </span>
+                                        <span className="notif-time">{formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}</span>
 
                                         {notif.type === 'friend_request' && (
                                             <div className="notif-actions">
                                                 <button
-                                                    className="btn-xs btn-gradient"
+                                                    className="btn-gradient btn-xs"
                                                     onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        handleAccept(notif.from_user_id._id, notif._id)
+                                                        e.stopPropagation();
+                                                        e.nativeEvent.stopImmediatePropagation();
+                                                        handleAccept(notif.from_user_id._id, notif._id);
                                                     }}
                                                 >
                                                     Accept
                                                 </button>
+                                                <button
+                                                    className="btn-outline btn-xs"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        e.nativeEvent.stopImmediatePropagation();
+                                                        handleReject(notif.from_user_id._id, notif._id);
+                                                    }}
+                                                >
+                                                    Reject
+                                                </button>
                                                 <Link
-                                                    to={`/profile/${notif.from_user_id._id}`}
-                                                    className="btn-xs btn-outline"
-                                                    onClick={() => onClose()}
+                                                    to={`/friends?find=${notif.from_user_id.email}`}
+                                                    className="btn-outline btn-xs"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        e.nativeEvent.stopImmediatePropagation();
+                                                        // Close popover when navigating
+                                                        onClose();
+                                                    }}
                                                 >
                                                     View Profile
                                                 </Link>
                                             </div>
                                         )}
                                     </div>
-                                    {!notif.read && <div className="notif-dot" />}
+                                    {!notif.read && (
+                                        <button
+                                            className="notif-dot"
+                                            title="Mark as read"
+                                            onClick={(e) => handleMarkRead(e, notif._id)}
+                                        />
+                                    )}
                                 </div>
                             ))
                         )}

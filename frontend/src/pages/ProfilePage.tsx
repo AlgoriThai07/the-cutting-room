@@ -4,25 +4,40 @@ import { motion } from 'framer-motion'
 import Header from '@/components/Header/Header.tsx'
 import { useAuthStore } from '@/store/authStore.ts'
 import { useTrackStore } from '@/store/trackStore.ts'
-import { MOCK_USERS } from '@/data/mockUsers.ts'
+import { useSocialStore } from '@/store/socialStore.ts'
 
 function ProfilePage() {
   const { userId } = useParams<{ userId: string }>()
   const currentUser = useAuthStore((s) => s.user)
   const getTracksByOwner = useTrackStore((s) => s.getTracksByOwner)
   const fetchTrackHistory = useTrackStore((s) => s.fetchTrackHistory)
+  const getUserProfile = useSocialStore((s) => s.getUserProfile)
+  const selectedProfile = useSocialStore((s) => s.selectedProfile)
+  const isLoading = useSocialStore((s) => s.isLoading)
 
   const isOwnProfile = !userId || userId === currentUser?.id
-  
+
   useEffect(() => {
     if (isOwnProfile && currentUser) {
       fetchTrackHistory()
+    } else if (userId) {
+      // Fetch user profile if not own profile
+      getUserProfile(userId)
     }
-  }, [isOwnProfile, currentUser, fetchTrackHistory])
+  }, [isOwnProfile, currentUser, userId, fetchTrackHistory, getUserProfile])
 
-  const profileUser = isOwnProfile
-    ? currentUser
-    : MOCK_USERS.find((u) => u.id === userId) ?? null
+  const profileUser = isOwnProfile ? currentUser : selectedProfile
+
+  if (isLoading && !isOwnProfile) {
+    return (
+      <div className="page-frame story-page">
+        <Header variant="story" />
+        <div className="expanded-empty">
+          <h2 className="font-hand fs-xl">Loading...</h2>
+        </div>
+      </div>
+    )
+  }
 
   if (!profileUser) {
     return (
@@ -35,7 +50,16 @@ function ProfilePage() {
     )
   }
 
-  const userTracks = getTracksByOwner(profileUser.id)
+  // If viewing another user, we need to fetch their tracks.
+  // Currently getTracksByOwner relies on tracks being in the store.
+  // We might need to fetch tracks for this specific user if not already loaded.
+  // For now, let's assume getTracksByOwner filters from loaded tracks, 
+  // but we should probably add a fetchUserTracks action if not exists.
+  // However, the current getTracksByOwner filters from `tracks` array which is populated by `getCommunityTracks`.
+  // If the user's tracks are not in community tracks, they won't show up.
+  // Let's settle for displaying what we have for now, or use `selectedProfile.tracks` if backend returns it (it doesn't yet).
+
+  const userTracks = getTracksByOwner(profileUser.id || profileUser._id)
 
   return (
     <div className="page-frame story-page">
@@ -49,8 +73,8 @@ function ProfilePage() {
           transition={{ duration: 0.5 }}
         >
           <img
-            src={profileUser.avatar}
-            alt={profileUser.displayName}
+            src={profileUser.avatar || `https://api.dicebear.com/7.x/shapes/svg?seed=${profileUser.username}`}
+            alt={profileUser.displayName || profileUser.username}
             className="profile-avatar"
             width="96"
             height="96"
@@ -58,19 +82,19 @@ function ProfilePage() {
           />
 
           <div className="profile-info">
-            <h2 className="font-hand fs-xxl">{profileUser.displayName}</h2>
-            <p className="profile-bio fs-base">{profileUser.bio}</p>
+            <h2 className="font-hand fs-xxl">{profileUser.displayName || profileUser.username}</h2>
+            <p className="profile-bio fs-base">{profileUser.bio || ''}</p>
 
             <div className="profile-stats">
               <div className="profile-stat">
                 <span className="profile-stat-value font-hand fs-l">
-                  {profileUser.tracksCount}
+                  {profileUser.tracksCount || 0}
                 </span>
                 <span className="profile-stat-label fs-xs">Tracks</span>
               </div>
               <div className="profile-stat">
                 <span className="profile-stat-value font-hand fs-l">
-                  {profileUser.friendsCount}
+                  {profileUser.friends?.length || profileUser.friendsCount || 0}
                 </span>
                 <span className="profile-stat-label fs-xs">Friends</span>
               </div>
@@ -88,7 +112,7 @@ function ProfilePage() {
 
         <div className="profile-tracks-section">
           <h3 className="font-hand fs-l profile-tracks-heading">
-            {isOwnProfile ? 'Your Tracks' : `${profileUser.displayName}\u2019s Tracks`}
+            {isOwnProfile ? 'Your Tracks' : `${profileUser.displayName || profileUser.username}\u2019s Tracks`}
           </h3>
 
           <div className="profile-tracks-grid">
@@ -120,7 +144,7 @@ function ProfilePage() {
                 </motion.div>
               ))
             ) : (
-              <p className="profile-no-tracks fs-base">No tracks yet.</p>
+              <p className="profile-no-tracks fs-base">No tracks (that are public) yet.</p>
             )}
           </div>
         </div>

@@ -67,49 +67,42 @@ function StoryRecapPage() {
       <Header variant="story" />
 
       <div className="recap-body">
-        {/* This will be done soon huhu*/}
-        <motion.section
-          className="recap-section recap-unfinished"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: 'easeOut' }}
-        >
-          {scissorsIcon}
+        {/* Variant A: Left unfinished (Raw Narrative) */}
+        {!track?.communityReflection && (
+          <motion.section
+            className="recap-section recap-unfinished"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
+          >
+            {scissorsIcon}
 
             <h2 className="recap-title font-hand fs-xxl">
               Listening to what you left unfinished...
             </h2>
 
-          <div className="recap-narrative">
-            {track ? (
-              track.narrative.map((para, i) => (
-                <p key={i} className="fs-base">{para}</p>
-              ))
-            ) : (
-              <>
-                <p className="fs-base">
-                  The frames you left behind this week carry a weight that finished work rarely does.
-                  There is something honest about an incomplete sequence — it admits that the story is still happening,
-                  still unfolding beyond the edges of what you chose to capture.
-                </p>
-                <p className="fs-base">
-                  The cutting room does not demand closure. It holds your fragments and waits.
-                  Sometimes the most powerful narrative is the one that stays open,
-                  that refuses the comfort of a tidy ending.
-                </p>
-              </>
-            )}
-          </div>
-        </motion.section>
-
-        {/* The Cutting Room recap */}
-        <motion.section
-          className="recap-section recap-polished"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }}
-        >
-          {scissorsIcon}
+            <div className="recap-narrative">
+              {track ? (
+                track.narrative.map((para, i) => (
+                  <p key={i} className="fs-base">{para}</p>
+                ))
+              ) : (
+                <>
+                  <p className="fs-base">
+                    The frames you left behind this week carry a weight that finished work rarely does.
+                    There is something honest about an incomplete sequence — it admits that the story is still happening,
+                    still unfolding beyond the edges of what you chose to capture.
+                  </p>
+                  <p className="fs-base">
+                    The cutting room does not demand closure. It holds your fragments and waits.
+                    Sometimes the most powerful narrative is the one that stays open,
+                    that refuses the comfort of a tidy ending.
+                  </p>
+                </>
+              )}
+            </div>
+          </motion.section>
+        )}
 
         {/* Variant B: The Cutting Room recap (With Reflection) */}
         {track?.communityReflection && (

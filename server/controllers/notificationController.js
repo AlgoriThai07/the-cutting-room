@@ -15,7 +15,7 @@ const getNotifications = async (req, res) => {
         }
 
         const notifications = await Notification.find(query)
-            .populate('from_user_id', 'username avatar')
+            .populate('from_user_id', 'username avatar email')
             .populate('node_id', 'recap_sentence')
             .sort({ created_at: -1 })
             .limit(50);

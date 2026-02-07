@@ -41,6 +41,16 @@ function DailyUpdateToast({ show }: DailyUpdateToastProps) {
     }
   }, [latestNotification, markAsRead])
 
+  // Auto-dismiss after 3 seconds
+  useEffect(() => {
+    if (visible) {
+      const timer = setTimeout(() => {
+        handleDismiss()
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [visible, handleDismiss])
+
   if (!latestNotification) return null
 
   // Format message based on type
