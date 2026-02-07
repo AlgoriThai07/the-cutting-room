@@ -1,0 +1,73 @@
+import type { User, Friend } from '@/types/index.ts'
+
+export const MOCK_USERS: readonly User[] = [
+  {
+    id: 'user-self',
+    username: 'you',
+    displayName: 'You',
+    avatar: 'https://picsum.photos/seed/self/200/200',
+    bio: 'Visual storyteller. Collecting moments one frame at a time.',
+    tracksCount: 4,
+    friendsCount: 12,
+  },
+  {
+    id: 'user-01',
+    username: 'maren',
+    displayName: 'Maren K.',
+    avatar: 'https://picsum.photos/seed/maren/200/200',
+    bio: 'Chasing golden hours and quiet corners.',
+    tracksCount: 7,
+    friendsCount: 23,
+  },
+  {
+    id: 'user-02',
+    username: 'joel',
+    displayName: 'Joel S.',
+    avatar: 'https://picsum.photos/seed/joel/200/200',
+    bio: 'Urban textures and liminal spaces.',
+    tracksCount: 5,
+    friendsCount: 18,
+  },
+  {
+    id: 'user-03',
+    username: 'lina',
+    displayName: 'Lina W.',
+    avatar: 'https://picsum.photos/seed/lina/200/200',
+    bio: 'Finding patterns in the everyday overflow.',
+    tracksCount: 9,
+    friendsCount: 31,
+  },
+  {
+    id: 'user-04',
+    username: 'ravi',
+    displayName: 'Ravi D.',
+    avatar: 'https://picsum.photos/seed/ravi/200/200',
+    bio: 'Between the seen and unseen.',
+    tracksCount: 3,
+    friendsCount: 14,
+  },
+  {
+    id: 'user-05',
+    username: 'anya',
+    displayName: 'Anya P.',
+    avatar: 'https://picsum.photos/seed/anya/200/200',
+    bio: 'Light collector. Story weaver.',
+    tracksCount: 6,
+    friendsCount: 20,
+  },
+] as const
+
+export const MOCK_FRIENDS: readonly Friend[] = [
+  { id: 'user-01', username: 'maren', displayName: 'Maren K.', avatar: 'https://picsum.photos/seed/maren/200/200', bio: 'Chasing golden hours and quiet corners.', tracksCount: 7 },
+  { id: 'user-02', username: 'joel', displayName: 'Joel S.', avatar: 'https://picsum.photos/seed/joel/200/200', bio: 'Urban textures and liminal spaces.', tracksCount: 5 },
+  { id: 'user-03', username: 'lina', displayName: 'Lina W.', avatar: 'https://picsum.photos/seed/lina/200/200', bio: 'Finding patterns in the everyday overflow.', tracksCount: 9 },
+  { id: 'user-04', username: 'ravi', displayName: 'Ravi D.', avatar: 'https://picsum.photos/seed/ravi/200/200', bio: 'Between the seen and unseen.', tracksCount: 3 },
+  { id: 'user-05', username: 'anya', displayName: 'Anya P.', avatar: 'https://picsum.photos/seed/anya/200/200', bio: 'Light collector. Story weaver.', tracksCount: 6 },
+  { id: 'user-06', username: 'soren', displayName: 'Soren T.', avatar: 'https://picsum.photos/seed/soren/200/200', bio: 'Shadows and symmetries.', tracksCount: 4 },
+  { id: 'user-07', username: 'nadia', displayName: 'Nadia R.', avatar: 'https://picsum.photos/seed/nadia/200/200', bio: 'Recording the in-between.', tracksCount: 8 },
+  { id: 'user-08', username: 'felix', displayName: 'Felix L.', avatar: 'https://picsum.photos/seed/felix/200/200', bio: 'Every frame a question.', tracksCount: 2 },
+  { id: 'user-09', username: 'iris', displayName: 'Iris C.', avatar: 'https://picsum.photos/seed/iris/200/200', bio: 'Color studies in motion.', tracksCount: 11 },
+  { id: 'user-10', username: 'kai', displayName: 'Kai M.', avatar: 'https://picsum.photos/seed/kai/200/200', bio: 'Finding stillness in the noise.', tracksCount: 5 },
+  { id: 'user-11', username: 'vera', displayName: 'Vera H.', avatar: 'https://picsum.photos/seed/vera/200/200', bio: 'Doorways and departures.', tracksCount: 3 },
+  { id: 'user-12', username: 'tomás', displayName: 'Tom\u00e1s G.', avatar: 'https://picsum.photos/seed/tomas/200/200', bio: 'Architecture of the mundane.', tracksCount: 6 },
+] as const
