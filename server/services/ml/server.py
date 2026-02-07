@@ -7,10 +7,7 @@ import os
 # Load .env from server directory
 load_dotenv(Path(__file__).resolve().parent.parent.parent / '.env')
 
-from imgParsing import getEmbedding as getImageEmbedding, SUPPORTED_MIME_TYPES
-from textParsing import getEmbedding as getTextEmbedding
-from vectorSearch import find_similar_items
-from storyGeneration import generate_recap_sentence
+from storyGeneration import generate_story_from_image, generate_story_from_text
 from trackConclusion import generate_conclusion, generate_community_reflection
 
 app = FastAPI(title="Cutting Room ML Service")
@@ -21,105 +18,47 @@ app = FastAPI(title="Cutting Room ML Service")
 # management. The Node.js server handles all orchestration.
 
 
-@app.post("/api/ml/parse-image")
-async def parse_image(
-    file: UploadFile = File(...)
+@app.post("/api/ml/story-from-image")
+async def story_from_image_endpoint(
+    file: UploadFile = File(...),
+    story_so_far: str = Form("")
 ):
-    """Parse an image → return description + embedding. No DB writes."""
-    # Validate MIME type — only JPEG and PNG accepted
-    if file.content_type not in SUPPORTED_MIME_TYPES:
-        raise HTTPException(
+    """Generate story segment directly from image."""
+    # ─── Mime Type Check ───
+    # Basic check, though simple extensions also work.
+    if file.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
+         raise HTTPException(
             status_code=400,
             detail=f"Unsupported image format '{file.content_type}'. Only JPEG and PNG are accepted."
         )
 
-    temp_path = os.path.join(tempfile.gettempdir(), file.filename)
-    with open(temp_path, "wb") as f:
-        f.write(await file.read())
+    # Read bytes directly
+    image_bytes = await file.read()
 
     try:
-        result = getImageEmbedding(temp_path)
-        return {
-            "description": result["description"],
-            "embedding": result["embedding"]
-        }
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        result = generate_story_from_image(image_bytes, file.content_type, story_so_far)
+        return result
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
 
 
-@app.post("/api/ml/parse-text")
-async def parse_text(body: dict):
-    """Parse text → return embedding. No DB writes."""
+@app.post("/api/ml/story-from-text")
+async def story_from_text_endpoint(body: dict):
+    """Generate story segment directly from text input."""
     text = body.get("text")
+    story_so_far = body.get("story_so_far", "")
+
     if not text:
         raise HTTPException(status_code=400, detail="text is required")
 
     try:
-        result = getTextEmbedding(text)
-        return {
-            "text": result["text"],
-            "embedding": result["embedding"]
-        }
+        result = generate_story_from_text(text, story_so_far)
+        return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/ml/vector-search")
-async def vector_search(body: dict):
-    """Find similar items via vector search. Read-only DB query."""
-    embedding = body.get("embedding")
-    user_id = body.get("user_id")
-    limit = body.get("limit", 3)
-    exclude_item_ids = body.get("exclude_item_ids", [])
-
-    if not embedding or not user_id:
-        raise HTTPException(status_code=400, detail="embedding and user_id are required")
-
-    try:
-        from bson import ObjectId
-        similar = find_similar_items(
-            embedding=embedding,
-            user_id=ObjectId(user_id),
-            limit=limit,
-            exclude_item_ids=[ObjectId(i) for i in exclude_item_ids]
-        )
-        # Serialize ObjectIds for JSON
-        for item in similar:
-            item["_id"] = str(item["_id"])
-            item["user_id"] = str(item["user_id"])
-        return {"similar_items": similar}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/ml/generate-recap")
-async def generate_recap(body: dict):
-    """Generate a recap sentence for a node. Pure LLM call."""
-    user_description = body.get("user_item_description", "")
-    similar_descriptions = body.get("similar_item_descriptions", [])
-    story_so_far = body.get("story_so_far", "")
-
-    item_index = body.get("item_index", 0)
-    total_items = body.get("total_items", 1)
-
-    if not user_description:
-        raise HTTPException(status_code=400, detail="user_item_description is required")
-
-    try:
-        recap = generate_recap_sentence(
-            user_item_description=user_description,
-            similar_item_descriptions=similar_descriptions,
-            story_so_far=story_so_far,
-            item_index=item_index,
-            total_items=total_items
-        )
-        return {"recap_sentence": recap}
-    except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
