@@ -22,11 +22,11 @@ import os
 import time
 
 # ─── Config ───────────────────────────────────────────────────────
-load_dotenv(Path(__file__).resolve().parent.parent.parent / '.env')
+load_dotenv(Path(__file__).resolve().parent.parent.parent  / '.env')
 
 BATCH_SIZE = 6                # items per LLM batch before cooldown
 BATCH_DELAY_SECONDS = 65      # RPM cooldown between batches
-INTRA_DELAY_SECONDS = 65      # 1 minute delay between individual LLM calls
+INTRA_DELAY_SECONDS = 10      # 10s delay between individual LLM calls
 
 # MongoDB
 mongo_client = MongoClient(os.environ.get("MONGODB_URI"))
@@ -138,7 +138,9 @@ def process_user(user, all_stories, call_count):
                 call_count,
                 user_item_description=description,
                 similar_item_descriptions=[],
-                story_so_far=story_so_far
+                story_so_far=story_so_far,
+                item_index=idx,
+                total_items=len(items)
             )
             recap = recap.strip()
         except Exception as e:
