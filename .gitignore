@@ -13,7 +13,7 @@ lerna-debug.log*
 
 # Dependencies
 node_modules/
-package-lock.json.example
+
 
 # Environment
 .env
