@@ -181,103 +181,11 @@ const concludeTrackInternal = async (track) => {
 };
 
 /**
- * After storing an item, try to create a node if there are enough items
- * in the global database (10+). Then check auto-conclusion.
- */
-const tryCreateNode = async (userId, item) => {
-    // Check global item count
-    const totalItems = await Item.countDocuments({});
-    if (totalItems < 10) {
-        console.log(`Only ${totalItems} items globally — need 10+ for node creation`);
-        return null;
-    }
-
-    // Get items already paired to avoid duplicates
-    const excludeIds = await getAlreadyPairedItemIds(userId);
-
-    // Call ML service for vector search
-    let similarItems;
-    try {
-        const searchResult = await modelApi.vectorSearch(
-            item.embedding,
-            userId,
-            3,
-            excludeIds
-        );
-        similarItems = searchResult.similar_items || [];
-    } catch (err) {
-        console.error('Vector search failed:', err.message);
-        return null;
-    }
-
-    if (similarItems.length === 0) {
-        console.log('No similar items found from other users');
-        return null;
-    }
-
-    const similarItemIds = similarItems.map(s => s._id);
-    const similarDescriptions = similarItems.map(s => s.description || s.text || '');
-
-    // Get active track
-    const track = await getActiveTrack(userId);
-
-    // If track is already concluded, skip (shouldn't happen but safety check)
-    if (track.concluded) return null;
-
-    const storySoFar = track.story || '';
-    const userDescription = item.description || item.text || '';
-
-    // Call ML for recap sentence
-    let recapSentence = '';
-    try {
-        const recapResult = await modelApi.generateRecap(
-            userDescription,
-            similarDescriptions,
-            storySoFar
-        );
-        recapSentence = recapResult.recap_sentence || '';
-    } catch (err) {
-        console.error('Recap generation failed:', err.message);
-        recapSentence = '';
-    }
-
-    // Find previous node for linking
-    const previousNode = await Node.findOne({ user_id: userId })
-        .sort({ created_at: -1 });
-
-    const weekId = getWeekId();
-
-    // Create the node
-    const node = await Node.create({
-        user_id: userId,
-        user_item_id: item._id,
-        previous_node_id: previousNode ? previousNode._id : null,
-        similar_item_ids: similarItemIds,
-        recap_sentence: recapSentence,
-        week_id: weekId
-    });
-
-    // Update track
-    const updatedStory = `${storySoFar} ${recapSentence}`.trim();
-    track.node_ids.push(node._id);
-    track.story = updatedStory;
-    await track.save();
-
-    console.log(`Created node ${node._id} (track now has ${track.node_ids.length} nodes)`);
-
-    // Check if track should auto-conclude
-    await checkAutoConclusion(track);
-
-    return node;
-};
-
-/**
  * Create an item — full pipeline
  * POST /api/items
  * 
- * Flow: daily limit → ML parse → store item → try create node → auto-conclude check
+ * Flow: daily limit → ML generate (desc + story) → store item → create node → auto-conclude check
  */
-
 const createItem = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -309,13 +217,21 @@ const createItem = async (req, res) => {
             return res.status(400).json({ message: 'content_type must be "text" or "image"' });
         }
 
-        // ─── Handle file upload ───
+        // ─── Get Active Track & Story So Far ───
+        const track = await getActiveTrack(userId);
+        // If track is already concluded (rare race condition), we might want to error or start new?
+        // getActiveTrack handles creating a new one if needed, unless the week is truly over.
+
+        const storySoFar = track.story || "";
+        let storySegment = "";
+        let finalDescription = description || "";
+
+        // ─── Handle Content & ML Generation ───
         const files = req.files || [];
-        let embedding = [];
 
         if (content_type === 'image') {
             if (files[0]) {
-                // Validate MIME type — only JPEG and PNG
+                // Validate MIME type
                 const allowedMimes = ['image/jpeg', 'image/png'];
                 if (!allowedMimes.includes(files[0].mimetype)) {
                     return res.status(400).json({
@@ -326,14 +242,19 @@ const createItem = async (req, res) => {
                 // Upload to R2
                 content_url = await uploadFile(files[0]);
 
-                // Call ML to parse image → get description + embedding
+                // Call ML to generate story segment directly
                 try {
-                    const parsed = await modelApi.parseImage(files[0].buffer, files[0].originalname);
-                    description = parsed.description;
-                    embedding = parsed.embedding;
+                    const mlResult = await modelApi.generateStoryFromImage(
+                        files[0].buffer,
+                        files[0].originalname,
+                        storySoFar
+                    );
+                    finalDescription = mlResult.description;
+                    storySegment = mlResult.story_segment;
                 } catch (err) {
-                    console.error('ML image parsing failed:', err.message);
-                    // Still create the item, just without embedding/description
+                    console.error('ML story generation failed:', err.message);
+                    finalDescription = "An image captured in the moment.";
+                    storySegment = "A moment was captured, but the words escape me.";
                 }
             } else if (!content_url) {
                 return res.status(400).json({ message: 'Image file or URL is required for image items' });
@@ -342,36 +263,64 @@ const createItem = async (req, res) => {
             if (!text) {
                 return res.status(400).json({ message: 'Text content is required for text items' });
             }
-            description = text;
 
-            // Call ML to get embedding
+            // Call ML to generate story segment directly
             try {
-                const parsed = await modelApi.parseText(text);
-                embedding = parsed.embedding;
+                const mlResult = await modelApi.generateStoryFromText(
+                    text,
+                    storySoFar
+                );
+                finalDescription = mlResult.description; // or just keep text?
+                storySegment = mlResult.story_segment;
             } catch (err) {
-                console.error('ML text parsing failed:', err.message);
+                console.error('ML story generation failed:', err.message);
+                finalDescription = "A note.";
+                storySegment = text; // Fallback to raw text
             }
         }
 
-        // ─── Store item in MongoDB ───
+        // ─── Store Item ───
         const newItem = await Item.create({
             user_id: userId,
             content_type,
             content_url: content_type === 'image' ? content_url : null,
             text: content_type === 'text' ? text : null,
             caption,
-            description,
-            embedding
+            description: finalDescription,
+            embedding: []
         });
 
-        // ─── Try to create a node (async, don't block response) ───
-        tryCreateNode(userId, newItem).catch(err => {
-            console.error('Node creation pipeline error:', err.message);
+        // ─── Create Node Immediately ───
+        // Find previous node for linking
+        const previousNode = await Node.findOne({ user_id: userId })
+            .sort({ created_at: -1 });
+
+        const weekId = getWeekId();
+
+        const node = await Node.create({
+            user_id: userId,
+            user_item_id: newItem._id,
+            previous_node_id: previousNode ? previousNode._id : null,
+            similar_item_ids: [],
+            recap_sentence: storySegment,
+            week_id: weekId
         });
+
+        // ─── Update Track ───
+        const updatedStory = `${storySoFar} ${storySegment}`.trim();
+        track.node_ids.push(node._id);
+        track.story = updatedStory;
+        await track.save();
+
+        console.log(`Created node ${node._id}. Track nodes: ${track.node_ids.length}`);
+
+        // Check auto-conclusion
+        await checkAutoConclusion(track);
 
         res.status(201).json({
-            message: 'Item created successfully',
+            message: 'Item and Node created successfully',
             item: newItem,
+            node: node,
             remaining: remaining - 1
         });
 
