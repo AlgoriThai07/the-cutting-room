@@ -26,6 +26,12 @@ const api = {
   // Expose the axios instance if needed
   client: axiosInstance,
 
+  // Generic HTTP methods (used by stores)
+  get: (url: string, config?: any) => axiosInstance.get(url, config),
+  post: (url: string, data?: any, config?: any) => axiosInstance.post(url, data, config),
+  put: (url: string, data?: any, config?: any) => axiosInstance.put(url, data, config),
+  delete: (url: string, config?: any) => axiosInstance.delete(url, config),
+
   // Auth
   login: (credentials: any) => axiosInstance.post('/auth/login', credentials),
   register: (userData: any) => axiosInstance.post('/auth/register', userData),
@@ -35,7 +41,7 @@ const api = {
   getCurrentTrack: () => axiosInstance.get('/tracks/current'),
   getTrackHistory: () => axiosInstance.get('/tracks/history'),
   getTrackById: (id: string) => axiosInstance.get(`/tracks/${id}`),
-  
+
   // Items & Nodes
   createItem: (formData: FormData) => axiosInstance.post('/items', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
