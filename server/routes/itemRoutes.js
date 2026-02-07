@@ -6,8 +6,12 @@ const { createItem, getItem, getUserItems, deleteItem } = require('../controller
 // All routes are protected
 router.use(authMiddleware);
 
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
+
 // POST /api/items - Create item(s)
-router.post('/', createItem);
+// Use upload.any() to handle multiple files from any field (or 'files' field specifically if preferred)
+router.post('/', upload.any(), createItem);
 
 // GET /api/items/:id - Get item by ID
 router.get('/:id', getItem);
