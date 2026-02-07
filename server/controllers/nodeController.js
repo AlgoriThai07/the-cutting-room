@@ -1,5 +1,6 @@
 const Node = require('../models/Node');
 const Track = require('../models/Track');
+const { createNotification } = require('./notificationController');
 
 /**
  * Get ISO week string (e.g., "2026-W06")
@@ -83,7 +84,8 @@ const getNode = async (req, res) => {
             .populate('user_id', 'username avatar')
             .populate('user_item_id')
             .populate('previous_node_id')
-            .populate('similar_item_ids');
+            .populate('similar_item_ids')
+            .populate('liked_by', 'username avatar');
 
         if (!node) {
             return res.status(404).json({ message: 'Node not found' });
@@ -106,6 +108,7 @@ const getUserNodes = async (req, res) => {
         const userId = req.params.userId;
         const nodes = await Node.find({ user_id: userId })
             .populate('similar_item_ids')
+            .populate('liked_by', 'username avatar')
             .sort({ created_at: -1 })
             .limit(50);
 
@@ -183,10 +186,80 @@ const deleteNode = async (req, res) => {
     }
 };
 
+/**
+ * Like a node
+ * POST /api/nodes/:id/like
+ */
+const likeNode = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const node = await Node.findById(req.params.id);
+
+        if (!node) {
+            return res.status(404).json({ message: 'Node not found' });
+        }
+
+        // Check if already liked
+        if (node.liked_by.includes(userId)) {
+            return res.status(400).json({ message: 'Already liked this node' });
+        }
+
+        node.liked_by.push(userId);
+        await node.save();
+
+        // Notify node owner
+        await createNotification(node.user_id, 'like', userId, node._id);
+
+        res.json({
+            message: 'Node liked',
+            likes_count: node.liked_by.length
+        });
+
+    } catch (error) {
+        console.error('likeNode error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+/**
+ * Unlike a node
+ * DELETE /api/nodes/:id/like
+ */
+const unlikeNode = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const node = await Node.findById(req.params.id);
+
+        if (!node) {
+            return res.status(404).json({ message: 'Node not found' });
+        }
+
+        const index = node.liked_by.indexOf(userId);
+        if (index === -1) {
+            return res.status(400).json({ message: 'Not liked yet' });
+        }
+
+        node.liked_by.splice(index, 1);
+        await node.save();
+
+        res.json({
+            message: 'Node unliked',
+            likes_count: node.liked_by.length
+        });
+
+    } catch (error) {
+        console.error('unlikeNode error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 module.exports = {
     createNode,
     getNode,
     getUserNodes,
     updateNode,
-    deleteNode
+    deleteNode,
+    likeNode,
+    unlikeNode
 };
+

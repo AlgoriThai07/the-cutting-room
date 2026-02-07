@@ -28,6 +28,10 @@ const nodeSchema = new mongoose.Schema({
         type: String, // e.g., "2026-W06"
         required: true
     },
+    liked_by: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
     created_at: {
         type: Date,
         default: Date.now

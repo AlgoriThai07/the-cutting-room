@@ -13,6 +13,7 @@ import FriendsPage from './pages/FriendsPage.tsx'
 import AuthGuard from './components/AuthGuard/AuthGuard.tsx'
 import DailyUpdateToast from './components/DailyUpdateToast/DailyUpdateToast.tsx'
 import { useAuthStore } from './store/authStore.ts'
+import { useNotificationStore } from './store/notificationStore.ts'
 
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -22,14 +23,27 @@ function App() {
   const login = useAuthStore((s) => s.login)
   const [searchParams, setSearchParams] = useSearchParams()
 
+  const startPolling = useNotificationStore((s) => s.startPolling)
+  const stopPolling = useNotificationStore((s) => s.stopPolling)
+
   useEffect(() => {
     const token = searchParams.get('token')
     if (token) {
-        login(token)
-        // Clean up URL
-        setSearchParams({})
+      login(token)
+      // Clean up URL
+      setSearchParams({})
     }
   }, [searchParams, login, setSearchParams])
+
+  // Start/stop notification polling based on auth state
+  useEffect(() => {
+    if (isAuthenticated) {
+      startPolling()
+    } else {
+      stopPolling()
+    }
+    return () => stopPolling()
+  }, [isAuthenticated, startPolling, stopPolling])
 
   return (
     <>

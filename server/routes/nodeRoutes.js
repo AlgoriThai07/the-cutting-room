@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
-const { createNode, getNode, getUserNodes, updateNode, deleteNode } = require('../controllers/nodeController');
+const { likeNode, unlikeNode, createNode, getNode, getUserNodes, updateNode, deleteNode } = require('../controllers/nodeController');
 
 // All routes are protected
 router.use(authMiddleware);
@@ -20,5 +20,11 @@ router.put('/:id', updateNode);
 
 // DELETE /api/nodes/:id - Delete a node
 router.delete('/:id', deleteNode);
+
+// POST /api/nodes/:id/like - Like a node
+router.post('/:id/like', likeNode);
+
+// DELETE /api/nodes/:id/like - Unlike a node
+router.delete('/:id/like', unlikeNode);
 
 module.exports = router;

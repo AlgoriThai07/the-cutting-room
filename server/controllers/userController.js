@@ -1,19 +1,20 @@
 const User = require('../models/User');
+const { createNotification } = require('./notificationController');
 
 const MAX_FRIENDS = 40;
 
 /**
- * Follow a user
- * POST /api/users/:id/follow
+ * Send a friend request
+ * POST /api/users/:id/request
  */
-const followUser = async (req, res) => {
+const sendFriendRequest = async (req, res) => {
     try {
         const userId = req.user.id;
         const targetUserId = req.params.id;
 
-        // Can't follow yourself
+        // Can't send request to yourself
         if (userId === targetUserId) {
-            return res.status(400).json({ message: 'Cannot follow yourself' });
+            return res.status(400).json({ message: 'Cannot send friend request to yourself' });
         }
 
         // Check if target user exists
@@ -22,62 +23,216 @@ const followUser = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Get current user
         const user = await User.findById(userId);
 
-        // Check friend limit
-        if (user.friends.length >= MAX_FRIENDS) {
-            return res.status(400).json({ message: `Maximum friends limit reached (${MAX_FRIENDS})` });
-        }
-
-        // Check if already following
+        // Check if already friends
         if (user.friends.includes(targetUserId)) {
-            return res.status(400).json({ message: 'Already following this user' });
+            return res.status(400).json({ message: 'Already friends with this user' });
         }
 
-        // Add to friends list
-        user.friends.push(targetUserId);
-        await user.save();
+        // Check if request already sent
+        if (user.friend_requests_sent.includes(targetUserId)) {
+            return res.status(400).json({ message: 'Friend request already sent' });
+        }
 
-        res.json({
-            message: 'Successfully followed user',
-            friends_count: user.friends.length
-        });
+        // Check if they already sent us a request (auto-accept)
+        if (user.friend_requests_received.includes(targetUserId)) {
+            // Auto-accept: add each other as friends
+            if (user.friends.length >= MAX_FRIENDS) {
+                return res.status(400).json({ message: `You have reached the maximum friends limit (${MAX_FRIENDS})` });
+            }
+            if (targetUser.friends.length >= MAX_FRIENDS) {
+                return res.status(400).json({ message: `Target user has reached the maximum friends limit (${MAX_FRIENDS})` });
+            }
+
+            user.friends.push(targetUserId);
+            targetUser.friends.push(userId);
+            user.friend_requests_received.pull(targetUserId);
+            targetUser.friend_requests_sent.pull(userId);
+            await user.save();
+            await targetUser.save();
+
+            return res.json({
+                message: 'Friend request auto-accepted (they had already sent you a request)',
+                friends_count: user.friends.length
+            });
+        }
+
+        // Send the request
+        user.friend_requests_sent.push(targetUserId);
+        targetUser.friend_requests_received.push(userId);
+        await user.save();
+        await targetUser.save();
+
+        // Notify target user
+        await createNotification(targetUserId, 'friend_request', userId);
+
+        res.json({ message: 'Friend request sent' });
 
     } catch (error) {
-        console.error('followUser error:', error);
+        console.error('sendFriendRequest error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
 
 /**
- * Unfollow a user
- * DELETE /api/users/:id/follow
+ * Accept a friend request
+ * POST /api/users/requests/:id/accept
  */
-const unfollowUser = async (req, res) => {
+const acceptFriendRequest = async (req, res) => {
     try {
         const userId = req.user.id;
-        const targetUserId = req.params.id;
+        const fromUserId = req.params.id;
 
         const user = await User.findById(userId);
+        const fromUser = await User.findById(fromUserId);
 
-        // Check if following
-        const index = user.friends.indexOf(targetUserId);
-        if (index === -1) {
-            return res.status(400).json({ message: 'Not following this user' });
+        if (!fromUser) {
+            return res.status(404).json({ message: 'User not found' });
         }
 
-        // Remove from friends list
-        user.friends.splice(index, 1);
+        // Check if request exists
+        if (!user.friend_requests_received.includes(fromUserId)) {
+            return res.status(400).json({ message: 'No friend request from this user' });
+        }
+
+        // Check friend limits
+        if (user.friends.length >= MAX_FRIENDS) {
+            return res.status(400).json({ message: `You have reached the maximum friends limit (${MAX_FRIENDS})` });
+        }
+        if (fromUser.friends.length >= MAX_FRIENDS) {
+            return res.status(400).json({ message: `Requesting user has reached the maximum friends limit (${MAX_FRIENDS})` });
+        }
+
+        // Add each other as friends
+        user.friends.push(fromUserId);
+        fromUser.friends.push(userId);
+
+        // Clean up requests
+        user.friend_requests_received.pull(fromUserId);
+        fromUser.friend_requests_sent.pull(userId);
+
         await user.save();
+        await fromUser.save();
+
+        // Notify the requester that their request was accepted
+        await createNotification(fromUserId, 'friend_accepted', userId);
 
         res.json({
-            message: 'Successfully unfollowed user',
+            message: 'Friend request accepted',
             friends_count: user.friends.length
         });
 
     } catch (error) {
-        console.error('unfollowUser error:', error);
+        console.error('acceptFriendRequest error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+/**
+ * Reject/cancel a friend request
+ * DELETE /api/users/requests/:id
+ */
+const rejectFriendRequest = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const otherUserId = req.params.id;
+
+        const user = await User.findById(userId);
+        const otherUser = await User.findById(otherUserId);
+
+        if (!otherUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        let removed = false;
+
+        // Check if we received a request from them
+        if (user.friend_requests_received.includes(otherUserId)) {
+            user.friend_requests_received.pull(otherUserId);
+            otherUser.friend_requests_sent.pull(userId);
+            removed = true;
+        }
+
+        // Check if we sent a request to them (cancel)
+        if (user.friend_requests_sent.includes(otherUserId)) {
+            user.friend_requests_sent.pull(otherUserId);
+            otherUser.friend_requests_received.pull(userId);
+            removed = true;
+        }
+
+        if (!removed) {
+            return res.status(400).json({ message: 'No friend request found with this user' });
+        }
+
+        await user.save();
+        await otherUser.save();
+
+        res.json({ message: 'Friend request removed' });
+
+    } catch (error) {
+        console.error('rejectFriendRequest error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+/**
+ * Get pending friend requests (received)
+ * GET /api/users/requests
+ */
+const getPendingRequests = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const user = await User.findById(userId)
+            .populate('friend_requests_received', 'username email avatar')
+            .populate('friend_requests_sent', 'username email avatar');
+
+        res.json({
+            received: user.friend_requests_received,
+            sent: user.friend_requests_sent
+        });
+
+    } catch (error) {
+        console.error('getPendingRequests error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+/**
+ * Remove a friend (unfriend)
+ * DELETE /api/users/:id/friend
+ */
+const removeFriend = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const friendId = req.params.id;
+
+        const user = await User.findById(userId);
+        const friend = await User.findById(friendId);
+
+        if (!friend) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if actually friends
+        if (!user.friends.includes(friendId)) {
+            return res.status(400).json({ message: 'Not friends with this user' });
+        }
+
+        // Remove from both sides
+        user.friends.pull(friendId);
+        friend.friends.pull(userId);
+
+        await user.save();
+        await friend.save();
+
+        res.json({
+            message: 'Friend removed',
+            friends_count: user.friends.length
+        });
+
+    } catch (error) {
+        console.error('removeFriend error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
@@ -185,10 +340,14 @@ const getMe = async (req, res) => {
 };
 
 module.exports = {
-    followUser,
-    unfollowUser,
+    sendFriendRequest,
+    acceptFriendRequest,
+    rejectFriendRequest,
+    getPendingRequests,
+    removeFriend,
     getFriends,
     getProfile,
     getMe,
     updateProfile
 };
+
