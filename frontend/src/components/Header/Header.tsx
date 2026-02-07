@@ -15,6 +15,7 @@ function Header({ variant = 'landing' }: HeaderProps) {
   const logout = useAuthStore((s) => s.logout)
   const [signInOpen, setSignInOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const navigate = useNavigate()
 
   const unreadCount = useSocialStore((s) => s.unreadCount)
@@ -33,6 +34,8 @@ function Header({ variant = 'landing' }: HeaderProps) {
   const closeSignIn = useCallback(() => setSignInOpen(false), [])
   const toggleNotif = useCallback(() => setNotifOpen(prev => !prev), [])
   const closeNotif = useCallback(() => setNotifOpen(false), [])
+  const toggleMenu = useCallback(() => setMenuOpen(prev => !prev), [])
+  const closeMenu = useCallback(() => setMenuOpen(false), [])
 
   const handleSignOut = useCallback(() => {
     logout()
@@ -66,17 +69,48 @@ function Header({ variant = 'landing' }: HeaderProps) {
 
         <nav className="header-nav">
           {isAuthenticated ? (
-            <ul className="nav-list">
-              {NAV_LINKS.map((link) => (
-                <li key={link.to}>
-                  <Link to={link.to} className="nav-link font-hand">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+            <>
+              {/* Desktop nav */}
+              <ul className="nav-list nav-desktop">
+                {NAV_LINKS.map((link) => (
+                  <li key={link.to}>
+                    <Link to={link.to} className="nav-link font-hand">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
 
-              {/* Notification Bell */}
-              <li className="nav-item-notif">
+                {/* Notification Bell */}
+                <li className="nav-item-notif">
+                  <button
+                    className="btn-icon-notif"
+                    onClick={toggleNotif}
+                    aria-label="Notifications"
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                    {unreadCount > 0 && (
+                      <span className="notif-badge">{unreadCount}</span>
+                    )}
+                  </button>
+                  <NotificationPopover isOpen={notifOpen} onClose={closeNotif} />
+                </li>
+
+                <li>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="nav-link font-hand btn-link"
+                  >
+                    Sign Out
+                  </button>
+                </li>
+              </ul>
+
+              {/* Mobile: bell + hamburger */}
+              <div className="nav-mobile-icons">
                 <button
                   className="btn-icon-notif"
                   onClick={toggleNotif}
@@ -91,18 +125,61 @@ function Header({ variant = 'landing' }: HeaderProps) {
                   )}
                 </button>
                 <NotificationPopover isOpen={notifOpen} onClose={closeNotif} />
-              </li>
 
-              <li>
                 <button
-                  type="button"
-                  onClick={handleSignOut}
-                  className="nav-link font-hand btn-link"
+                  className="hamburger-btn"
+                  onClick={toggleMenu}
+                  aria-label="Toggle menu"
+                  aria-expanded={menuOpen}
                 >
-                  Sign Out
+                  <span className={`hamburger-icon ${menuOpen ? 'open' : ''}`}>
+                    <span />
+                    <span />
+                    <span />
+                  </span>
                 </button>
-              </li>
-            </ul>
+              </div>
+
+              {/* Mobile drawer */}
+              {menuOpen && (
+                <div className="mobile-menu-backdrop" onClick={closeMenu} />
+              )}
+              <div className={`mobile-drawer ${menuOpen ? 'open' : ''}`}>
+                <div className="mobile-drawer-logo">
+                  <Link to="/" onClick={closeMenu}>
+                    <img
+                      src="/favicon-96x96.png"
+                      alt="The Cutting Room"
+                      width="48"
+                      height="48"
+                      draggable={false}
+                    />
+                  </Link>
+                </div>
+                <ul className="mobile-drawer-list">
+                  {NAV_LINKS.map((link) => (
+                    <li key={link.to}>
+                      <Link
+                        to={link.to}
+                        className="mobile-drawer-link font-hand"
+                        onClick={closeMenu}
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => { handleSignOut(); closeMenu() }}
+                      className="mobile-drawer-link font-hand btn-link"
+                    >
+                      Sign Out
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </>
           ) : (
             /* Public / Landing State: Show "Sign in" button if NOT on landing page */
             (!isStory && variant !== 'landing') && (
