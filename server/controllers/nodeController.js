@@ -27,25 +27,24 @@ const getWeekStart = (date = new Date()) => {
 };
 
 /**
- * Create a new node
+ * Create one or more nodes
  * POST /api/nodes
+ * Body can be: { content_type, text, ... } OR { items: [{...}, {...}] }
  */
 const createNode = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { content_type, content_url, text, caption } = req.body;
 
-        // Validate content_type
-        if (!['text', 'image'].includes(content_type)) {
-            return res.status(400).json({ message: 'content_type must be "text" or "image"' });
+        // Detect if single item or array
+        let items = [];
+        if (req.body.items && Array.isArray(req.body.items)) {
+            items = req.body.items;
+        } else {
+            items = [req.body]; // Single item as array
         }
 
-        // Validate content
-        if (content_type === 'text' && !text) {
-            return res.status(400).json({ message: 'Text content is required for text nodes' });
-        }
-        if (content_type === 'image' && !content_url) {
-            return res.status(400).json({ message: 'Image URL is required for image nodes' });
+        if (items.length === 0) {
+            return res.status(400).json({ message: 'No items provided' });
         }
 
         // Check daily limit (3 nodes per day)
@@ -59,8 +58,11 @@ const createNode = async (req, res) => {
             created_at: { $gte: today, $lt: tomorrow }
         });
 
-        if (todayCount >= 3) {
-            return res.status(429).json({ message: 'Daily limit reached (3 nodes per day)' });
+        if (todayCount + items.length > 3) {
+            return res.status(429).json({
+                message: `Daily limit reached. You can create ${3 - todayCount} more nodes today.`,
+                remaining: 3 - todayCount
+            });
         }
 
         // Get week info
@@ -68,50 +70,74 @@ const createNode = async (req, res) => {
         const weekStart = getWeekStart();
 
         // Find previous node for linking
-        const previousNode = await Node.findOne({ user_id: userId })
+        let previousNode = await Node.findOne({ user_id: userId })
             .sort({ created_at: -1 });
 
-        // Generate embedding (stub for now)
-        const content = content_type === 'text' ? text : caption || '';
-        const embedding = await modelApi.generateEmbedding(content);
+        const createdNodes = [];
 
-        // Create the node
-        const node = await Node.create({
-            user_id: userId,
-            content_type,
-            content_url: content_type === 'image' ? content_url : null,
-            text: content_type === 'text' ? text : null,
-            caption,
-            embedding,
-            previous_node_id: previousNode ? previousNode._id : null,
-            neighbor_node_ids: [],
-            recap_sentence: null,
-            week_id: weekId
-        });
+        for (const item of items) {
+            const { content_type, content_url, text, caption } = item;
 
-        // Find/create track for this week and add node
+            // Validate content_type
+            if (!['text', 'image'].includes(content_type)) {
+                return res.status(400).json({ message: 'content_type must be "text" or "image"' });
+            }
+
+            // Validate content
+            if (content_type === 'text' && !text) {
+                return res.status(400).json({ message: 'Text content is required for text nodes' });
+            }
+            if (content_type === 'image' && !content_url) {
+                return res.status(400).json({ message: 'Image URL is required for image nodes' });
+            }
+
+            // Generate embedding (stub for now)
+            const content = content_type === 'text' ? text : caption || '';
+            const embedding = await modelApi.generateEmbedding(content);
+
+            // Create the node
+            const node = await Node.create({
+                user_id: userId,
+                content_type,
+                content_url: content_type === 'image' ? content_url : null,
+                text: content_type === 'text' ? text : null,
+                caption,
+                embedding,
+                previous_node_id: previousNode ? previousNode._id : null,
+                neighbor_node_ids: [],
+                recap_sentence: null,
+                week_id: weekId
+            });
+
+            createdNodes.push(node);
+            previousNode = node; // Chain nodes together
+        }
+
+        // Find/create track for this week and add all nodes
         let track = await Track.findOne({ user_id: userId, week_start: weekStart });
         if (!track) {
             track = await Track.create({
                 user_id: userId,
                 week_start: weekStart,
-                node_ids: [node._id]
+                node_ids: createdNodes.map(n => n._id)
             });
         } else {
-            track.node_ids.push(node._id);
+            track.node_ids.push(...createdNodes.map(n => n._id));
             await track.save();
         }
 
-        // Fire-and-forget: Generate recap (async, don't wait)
-        modelApi.generateRecap(node).then(async (recap) => {
-            if (recap) {
-                await Node.findByIdAndUpdate(node._id, { recap_sentence: recap });
-            }
-        }).catch(console.error);
+        // Fire-and-forget: Generate recaps (async, don't wait)
+        for (const node of createdNodes) {
+            modelApi.generateRecap(node).then(async (recap) => {
+                if (recap) {
+                    await Node.findByIdAndUpdate(node._id, { recap_sentence: recap });
+                }
+            }).catch(console.error);
+        }
 
         res.status(201).json({
-            message: 'Node created successfully',
-            node
+            message: `${createdNodes.length} node(s) created successfully`,
+            nodes: createdNodes
         });
 
     } catch (error) {
@@ -119,6 +145,7 @@ const createNode = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
 
 /**
  * Get a node by ID
