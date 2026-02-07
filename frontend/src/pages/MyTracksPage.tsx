@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Header from '@/components/Header/Header.tsx'
@@ -6,7 +7,12 @@ import { useTrackStore } from '@/store/trackStore.ts'
 function MyTracksPage() {
   const currentTrack = useTrackStore((s) => s.currentTrack)
   const pastTracks = useTrackStore((s) => s.pastTracks)
+  const fetchTrackHistory = useTrackStore((s) => s.fetchTrackHistory)
   const allTracks = [...(currentTrack ? [currentTrack] : []), ...pastTracks]
+
+  useEffect(() => {
+    fetchTrackHistory()
+  }, [fetchTrackHistory])
 
   return (
     <div className="page-frame story-page">
