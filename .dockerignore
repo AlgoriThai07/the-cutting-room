@@ -3,5 +3,6 @@ dist
 coverage
 .git
 .env
+*.env
 .DS_Store
 *.log

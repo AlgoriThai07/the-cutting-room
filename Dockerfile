@@ -1,5 +1,5 @@
 # Stage 1: Build Frontend
-FROM node:20-alpine as frontend-build
+FROM node:20-alpine AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci
@@ -14,9 +14,8 @@ WORKDIR /app
 COPY server/package*.json ./
 RUN npm ci --only=production
 
-# Copy backend code and env
+# Copy backend code (no .env - use runtime environment variables)
 COPY server/ ./
-COPY server/.env ./.env
 
 # Copy built frontend to backend's public directory
 COPY --from=frontend-build /app/frontend/dist ./public
