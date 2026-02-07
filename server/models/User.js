@@ -17,7 +17,15 @@ const userSchema = new mongoose.Schema({
     },
     password_hash: {
         type: String,
-        required: true
+        required: false // Optional for OAuth users
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    avatar: {
+        type: String
     },
     friends: [{
         type: mongoose.Schema.Types.ObjectId,
