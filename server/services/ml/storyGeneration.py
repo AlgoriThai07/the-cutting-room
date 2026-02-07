@@ -9,35 +9,32 @@ load_dotenv(Path(__file__).resolve().parent.parent.parent / '.env')
 client = genai.Client(api_key=os.environ.get("GOOGLE_GEMINI_API"))
 
 recap_prompt = """
-You are continuing a personal weekly narrative about someone's everyday life.
+You are writing a deeply personal, emotionally evolving narrative based on a series of moments.
+Your goal is to capture the internal world of the protagonist—their thoughts, anxieties, hopes, and realizations.
 
 You are given:
-1. THE STORY SO FAR — the narrative built from previous moments this week (may be empty if this is the first moment)
-2. THIS MOMENT — a description of what the person just experienced
-3. ECHOES (optional) — similar moments from anonymous others in the community
+1. THE STORY SO FAR — the accumulated memories and feelings (may be empty at the start)
+2. THIS MOMENT — a description of what they are seeing/experiencing right now
+3. STAGE — where we are in the journey (Beginning, Middle, or Climax/End)
 
 Your job is to write THE NEXT SENTENCE (1–2 sentences, under 50 words) that:
-- CONTINUES the story naturally, as if writing the next line of a personal essay
-- Picks up the thread, tone, and rhythm of the story so far
-- Weaves this new moment into the ongoing arc — don't restart, don't summarize, don't repeat
-- If echoes are present, subtly acknowledge the shared experience without naming anyone
-- If this is the FIRST moment (no story so far), write an opening line that sets the scene
+- CONTINUES the emotional arc: If they were sad, are they now finding hope? If anxious, are they finding calm or spiraling?
+- Reveals the **internal monologue**: unrelated to the visual description, what are they *thinking*?
+- Connects the external world (the photo description) to their internal state.
+- **Deepens the narrative**: Don't just describe; interpret.
 
 Rules:
-- Write in third person
-- Do NOT repeat or paraphrase what's already in the story so far
-- Do NOT summarize the moment description — interpret it, absorb it, advance the narrative
-- Do NOT use phrases like "Meanwhile", "In another moment", "Additionally"
-- DO use transitional flow: time shifts, emotional pivots, spatial movement
-- Match the tone: if the story so far is reflective, stay reflective; if it's energetic, keep momentum
-- The sentence should feel incomplete without the story before it — it's a CONTINUATION, not a standalone
+- Write in third person, close perspective (as if inside their head).
+- **Show, don't just tell** the emotion.
+- If it's the **Climax/End** (Item 10 or final), bring the emotional arc to a powerful realization or turning point.
+- Do NOT summarize; *advance* the feeling.
 
 Goal:
-Someone reading the full story (including your new sentence) should feel it was written as one coherent piece, not stitched together from separate moments.
+A seamless, emotionally resonant story where the external world reflects the internal journey.
 """
 
 
-def generate_recap_sentence(user_item_description, similar_item_descriptions=None, story_so_far=""):
+def generate_recap_sentence(user_item_description, similar_item_descriptions=None, story_so_far="", item_index=0, total_items=1):
     """
     Generate a single recap sentence that continues the weekly narrative.
     Pure LLM call — no database access.
@@ -46,6 +43,8 @@ def generate_recap_sentence(user_item_description, similar_item_descriptions=Non
         user_item_description: Description of the user's current moment
         similar_item_descriptions: List of descriptions from similar items (can be empty)
         story_so_far: The accumulated narrative from previous nodes this week
+        item_index: The 0-based index of the current item in the sequence
+        total_items: Total number of items in the sequence
 
     Returns:
         A continuation sentence (1-2 sentences, under 50 words)
@@ -56,11 +55,22 @@ def generate_recap_sentence(user_item_description, similar_item_descriptions=Non
             [f"  - {desc}" for desc in similar_item_descriptions if desc]
         )
 
+    # Determine stage
+    if item_index == 0:
+        stage = "BEGINNING: Set the scene and the initial emotional state."
+    elif item_index >= total_items - 1 or item_index >= 9: # Item 10 (index 9) or last
+        stage = "CONCLUSION/END: This is the final moment. Wrap up the immediate narrative arc. Provide a sense of closure or a final realization."
+    else:
+        stage = "MIDDLE: Develop the theme. fluctuating emotions, deepening thoughts."
+
     prompt = f"""{recap_prompt}
 
 ---
+STAGE:
+{stage}
+
 THE STORY SO FAR:
-{story_so_far if story_so_far else "(This is the first moment of the week — write an opening line.)"}
+{story_so_far if story_so_far else "(This is the first moment — start the journey.)"}
 
 THIS MOMENT:
 {user_item_description}

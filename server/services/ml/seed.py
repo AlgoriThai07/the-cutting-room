@@ -26,9 +26,9 @@ import mimetypes
 load_dotenv(Path(__file__).resolve().parent.parent.parent / '.env')
 
 PHOTOS_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent / 'Sparkhack_photos'
-BATCH_SIZE = 6                # 18 photos ÷ 3 batches
+BATCH_SIZE = 9               # 18 photos ÷ 3 batches
 BATCH_DELAY_SECONDS = 65      # Wait between batches to reset RPM window
-INTRA_BATCH_DELAY = 5         # Small delay between images within a batch
+INTRA_BATCH_DELAY = 30         # Small delay between images within a batch
 SUPPORTED_MIME_TYPES = {'image/jpeg', 'image/png'}
 
 # Gemini client
@@ -40,28 +40,21 @@ db = mongo_client["cutting-room"]
 
 # ─── Prompt (same as imgParsing.py) ───────────────────────────────
 description_prompt = """
-You are writing a brief observational note about a photographed moment in everyday life.
-
-Your task is NOT to list objects and NOT to describe the composition.
-Instead, infer the lived situation happening in this scene.
+You are an empathetic storyteller. Your task is to analyze this photo for both its artistic qualities and its deeper meaning.
 
 Focus on:
-what kind of place this is
-what time or phase of the day it feels like
-what people are likely doing or about to do (even if nobody is visible)
-the social or emotional atmosphere of the space
-
-Write a compact paragraph (2–4 sentences, under 90 words).
+1. **The content**: What is happening, but more importantly, what it *means*.
+2. **The feeling**: The mood, atmosphere, and emotions evoked by the scene.
+3. **The story**: Who is the person behind the camera? What were they **thinking**, feeling, or seeing that made them capture this moment?
 
 Rules:
-Do not mention the camera, photographer, or "the image"
-Do not inventory objects (avoid long noun lists)
-Avoid poetic metaphors and dramatic language
-Avoid guessing specific identities (no age, race, or precise personal details)
-Prefer grounded, observational language
+- Do not just list objects; explain their significance to the moment.
+- Capture the *lived experience* and *internal monologue* of the photographer.
+- Use evocative, grounded language.
+- Keep it concise (under 100 words).
 
 Goal:
-Produce a short piece of text that captures the human context and mood of the moment so that another system could compare it to similar life situations.
+Produce a short piece of text that captures the context, mood, and the human story behind the lens.
 """
 
 
