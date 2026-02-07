@@ -1,19 +1,34 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Header from '@/components/Header/Header.tsx'
 import { useAuthStore } from '@/store/authStore.ts'
 import { useTrackStore } from '@/store/trackStore.ts'
+import type { Track } from '@/types/index.ts'
 
 function ViewTrackPage() {
   const { trackId } = useParams<{ trackId: string }>()
   const navigate = useNavigate()
   const currentUser = useAuthStore((s) => s.user)
   const getTrackById = useTrackStore((s) => s.getTrackById)
-  const track = trackId ? getTrackById(trackId) : undefined
 
+  const [track, setTrack] = useState<Track | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'visuals' | 'written'>('visuals')
-  const [votes, setVotes] = useState({ up: track?.upvotes ?? 0, down: track?.downvotes ?? 0 })
+  const [votes, setVotes] = useState({ up: 0, down: 0 })
+
+  useEffect(() => {
+    if (trackId) {
+      setIsLoading(true)
+      getTrackById(trackId).then((t) => {
+        setTrack(t)
+        if (t) {
+          setVotes({ up: t.upvotes ?? 0, down: t.downvotes ?? 0 })
+        }
+        setIsLoading(false)
+      })
+    }
+  }, [trackId, getTrackById])
 
   const handleUpvote = useCallback(() => {
     setVotes((v) => ({ ...v, up: v.up + 1 }))
@@ -22,6 +37,17 @@ function ViewTrackPage() {
   const handleDownvote = useCallback(() => {
     setVotes((v) => ({ ...v, down: v.down + 1 }))
   }, [])
+
+  if (isLoading) {
+    return (
+      <div className="page-frame story-page">
+        <Header variant="story" />
+        <div className="expanded-empty">
+          <p className="font-hand fs-l">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!track) {
     return (
@@ -87,7 +113,7 @@ function ViewTrackPage() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              {track.nodes.map((node, i) => (
+              {track.nodes.map((node: any, i: number) => (
                 <motion.div
                   key={node.id}
                   className="track-visual-card"
@@ -115,7 +141,7 @@ function ViewTrackPage() {
             >
               <p className="track-pinned font-hand fs-s">{track.pinnedSentence}</p>
               <div className="track-narrative">
-                {track.narrative.map((para, i) => (
+                {track.narrative.map((para: string, i: number) => (
                   <p key={i} className="fs-base">{para}</p>
                 ))}
               </div>

@@ -41,6 +41,11 @@ app.use('/api/items', itemRoutes);
 app.use('/api/notifications', notificationRoutes);
 // app.use('/api/demo', demoRoutes);  // Demo — no auth required
 
+// Serve React App (Production)
+app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 
 // Database Connection
 const connectDB = require('./config/db');

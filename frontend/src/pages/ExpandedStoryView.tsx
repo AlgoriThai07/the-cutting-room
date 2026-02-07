@@ -1,13 +1,37 @@
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Header from '@/components/Header/Header.tsx'
 import { useTrackStore } from '@/store/trackStore.ts'
+import type { Track } from '@/types/index.ts'
 
 function ExpandedStoryView() {
   const { trackId } = useParams<{ trackId: string }>()
   const navigate = useNavigate()
   const getTrackById = useTrackStore((s) => s.getTrackById)
-  const track = trackId ? getTrackById(trackId) : undefined
+  const [track, setTrack] = useState<Track | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    if (trackId) {
+      setIsLoading(true)
+      getTrackById(trackId).then((t) => {
+        setTrack(t)
+        setIsLoading(false)
+      })
+    }
+  }, [trackId, getTrackById])
+
+  if (isLoading) {
+    return (
+      <div className="page-frame story-page">
+        <Header variant="story" />
+        <div className="expanded-empty">
+          <p className="font-hand fs-l">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!track) {
     return (
@@ -41,7 +65,7 @@ function ExpandedStoryView() {
         </div>
 
         <div className="expanded-content">
-          {track.nodes.map((node, i) => (
+          {track.nodes.map((node: any, i: number) => (
             <motion.div
               key={node.id}
               className="expanded-entry"

@@ -13,6 +13,7 @@ interface TrackState {
   fetchTrackHistory: () => Promise<void>
   fetchCommunityTracks: () => Promise<void>
   getTracksByOwner: (ownerId: string) => Track[]
+  getTrackById: (id: string) => Promise<Track | null>
   concludeTrack: (id: string) => Promise<boolean>
   uploadItem: (formData: FormData) => Promise<boolean>
 }
@@ -112,6 +113,30 @@ export const useTrackStore = create<TrackState>((set, get) => ({
     ]
     // Filter by ownerId (handling both string ID and potential object ID mismatch if any)
     return all.filter((t) => t.ownerId === ownerId || t.ownerId === ownerId)
+  },
+
+  getTrackById: async (id: string) => {
+    // First check local state
+    const state = get()
+    const local = [
+      ...(state.currentTrack ? [state.currentTrack] : []),
+      ...state.pastTracks,
+      ...state.communityTracks
+    ].find(t => t.id === id)
+
+    if (local) return local
+
+    // Fallback to API
+    set({ isLoading: true })
+    try {
+      const response = await api.getTrackById(id)
+      return transformTrack(response.data)
+    } catch (err) {
+      console.error('Failed to fetch track by ID', err)
+      return null
+    } finally {
+      set({ isLoading: false })
+    }
   },
 
   concludeTrack: async (id: string) => {
