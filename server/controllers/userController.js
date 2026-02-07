@@ -339,6 +339,32 @@ const getMe = async (req, res) => {
     }
 };
 
+/**
+ * Search user by email (exact match)
+ * GET /api/users/search?email=...
+ */
+const searchUserByEmail = async (req, res) => {
+    try {
+        const { email } = req.query;
+        if (!email) {
+            return res.status(400).json({ message: 'Email query parameter is required' });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() })
+            .select('username email avatar bio');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json(user);
+
+    } catch (error) {
+        console.error('searchUserByEmail error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 module.exports = {
     sendFriendRequest,
     acceptFriendRequest,
@@ -348,6 +374,7 @@ module.exports = {
     getFriends,
     getProfile,
     getMe,
-    updateProfile
+    updateProfile,
+    searchUserByEmail
 };
 

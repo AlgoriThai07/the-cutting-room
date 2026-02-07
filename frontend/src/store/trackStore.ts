@@ -14,6 +14,7 @@ interface TrackState {
   fetchCommunityTracks: () => Promise<void>
   getTracksByOwner: (ownerId: string) => Track[]
   concludeTrack: (id: string) => Promise<boolean>
+  uploadItem: (formData: FormData) => Promise<boolean>
 }
 
 const transformTrack = (backendTrack: any): Track => {
@@ -28,9 +29,9 @@ const transformTrack = (backendTrack: any): Track => {
 
   return {
     id: backendTrack._id || backendTrack.id,
-    ownerId: backendTrack.user_id,
-    ownerName: 'Unknown', // Populated by UI if needed
-    ownerAvatar: '',
+    ownerId: backendTrack.user_id?._id || backendTrack.user_id,
+    ownerName: backendTrack.user_id?.username || 'Unknown',
+    ownerAvatar: backendTrack.user_id?.avatar || '',
     title: `Week ${backendTrack.week_id?.split('-W')[1] || '??'}`,
     weekLabel: backendTrack.week_id || 'Current Week',
     status: backendTrack.concluded ? 'completed' : 'active',
@@ -119,6 +120,21 @@ export const useTrackStore = create<TrackState>((set, get) => ({
       return true
     } catch (err) {
       console.error('Failed to conclude track', err)
+      return false
+    } finally {
+      set({ isLoading: false })
+    }
+  },
+
+  uploadItem: async (formData: FormData) => {
+    set({ isLoading: true })
+    try {
+      await api.createItem(formData)
+      // Refresh the track to show the new node
+      await get().fetchCurrentTrack()
+      return true
+    } catch (err) {
+      console.error('Failed to upload item', err)
       return false
     } finally {
       set({ isLoading: false })
