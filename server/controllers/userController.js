@@ -127,6 +127,43 @@ const getProfile = async (req, res) => {
 };
 
 /**
+ * Update current user's profile
+ * PUT /api/users/me
+ * Updatable fields: username, avatar
+ */
+const updateProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { username, avatar } = req.body;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (username !== undefined) {
+            // Check if username is taken
+            const existing = await User.findOne({ username, _id: { $ne: userId } });
+            if (existing) {
+                return res.status(400).json({ message: 'Username already taken' });
+            }
+            user.username = username;
+        }
+        if (avatar !== undefined) user.avatar = avatar;
+
+        const updatedUser = await user.save();
+        const userObj = updatedUser.toObject();
+        delete userObj.password_hash;
+
+        res.json(userObj);
+
+    } catch (error) {
+        console.error('updateProfile error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+/**
  * Get current user's profile
  * GET /api/users/me
  */
@@ -152,5 +189,6 @@ module.exports = {
     unfollowUser,
     getFriends,
     getProfile,
-    getMe
+    getMe,
+    updateProfile
 };

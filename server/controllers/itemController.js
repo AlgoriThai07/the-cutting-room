@@ -90,7 +90,6 @@ const createItem = async (req, res) => {
                 text: content_type === 'text' ? text : null,
                 caption,
                 embedding,
-                similar_item_ids: [],
                 description
             });
 
@@ -115,8 +114,7 @@ const createItem = async (req, res) => {
 const getItem = async (req, res) => {
     try {
         const item = await Item.findById(req.params.id)
-            .populate('user_id', 'username avatar')
-            .populate('similar_item_ids');
+            .populate('user_id', 'username avatar');
 
         if (!item) {
             return res.status(404).json({ message: 'Item not found' });
@@ -145,6 +143,42 @@ const getUserItems = async (req, res) => {
 
     } catch (error) {
         console.error('getUserItems error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+/**
+ * Update an item
+ * PUT /api/items/:id
+ * Updatable fields: caption, description, text
+ */
+const updateItem = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const item = await Item.findById(req.params.id);
+
+        if (!item) {
+            return res.status(404).json({ message: 'Item not found' });
+        }
+
+        if (item.user_id.toString() !== userId) {
+            return res.status(403).json({ message: 'Not authorized to update this item' });
+        }
+
+        const { caption, description, text } = req.body;
+
+        if (caption !== undefined) item.caption = caption;
+        if (description !== undefined) item.description = description;
+        if (text !== undefined && item.content_type === 'text') {
+            item.text = text;
+            item.embedding = await modelApi.generateEmbedding(text);
+        }
+
+        const updatedItem = await item.save();
+        res.json(updatedItem);
+
+    } catch (error) {
+        console.error('updateItem error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
@@ -181,5 +215,6 @@ module.exports = {
     createItem,
     getItem,
     getUserItems,
+    updateItem,
     deleteItem
 };

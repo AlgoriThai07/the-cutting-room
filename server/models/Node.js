@@ -6,35 +6,14 @@ const nodeSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    content_type: {
-        type: String,
-        enum: ['text', 'image'],
-        required: true
-    },
-    content_url: {
-        type: String,
-        default: null // For images
-    },
-    text: {
-        type: String, // For text posts
-        default: null
-    },
-    caption: {
-        type: String,
-        maxlength: 280
-    },
-    embedding: {
-        type: [Number], // Vector from Model Team
-        default: []
-    },
     previous_node_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Node',
         default: null
     },
-    neighbor_node_ids: [{
+    similar_item_ids: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Node'
+        ref: 'Item'
     }],
     recap_sentence: {
         type: String,

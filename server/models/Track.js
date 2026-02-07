@@ -6,29 +6,21 @@ const trackSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    week_start: {
-        type: Date,
-        required: true
-    },
     node_ids: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Node'
     }],
-    personal_story: {
+    story: {
         type: String,
         default: null
     },
-    community_story: {
-        type: String,
-        default: null
+    week_id: {
+        type: String, // e.g., "2026-W06"
+        required: true
     },
-    theme_vector: {
-        type: [Number],
-        default: []
-    },
-    generated_at: {
+    created_at: {
         type: Date,
-        default: null
+        default: Date.now
     }
 });
 

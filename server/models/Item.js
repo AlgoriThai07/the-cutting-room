@@ -27,10 +27,6 @@ const itemSchema = new mongoose.Schema({
         type: [Number], // Vector from Model Team
         default: []
     },
-    similar_item_ids: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Item'
-    }],
     description: {
         type: String,
         default: null

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
-const { createItem, getItem, getUserItems, deleteItem } = require('../controllers/itemController');
+const { createItem, getItem, getUserItems, updateItem, deleteItem } = require('../controllers/itemController');
 
 // All routes are protected
 router.use(authMiddleware);
@@ -18,6 +18,9 @@ router.get('/:id', getItem);
 
 // GET /api/items/user/:userId - Get user's items
 router.get('/user/:userId', getUserItems);
+
+// PUT /api/items/:id - Update item
+router.put('/:id', updateItem);
 
 // DELETE /api/items/:id - Delete item
 router.delete('/:id', deleteItem);

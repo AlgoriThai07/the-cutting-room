@@ -15,36 +15,17 @@ const getWeekId = (date = new Date()) => {
 };
 
 /**
- * Get start of current week (Monday)
- */
-const getWeekStart = (date = new Date()) => {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    d.setDate(diff);
-    d.setHours(0, 0, 0, 0);
-    return d;
-};
-
-/**
- * Create one or more nodes
+ * Create a node
  * POST /api/nodes
- * Body can be: { content_type, text, ... } OR { items: [{...}, {...}] }
+ * Body: { similar_item_ids: [...], recap_sentence? }
  */
 const createNode = async (req, res) => {
     try {
         const userId = req.user.id;
+        const { similar_item_ids, recap_sentence } = req.body;
 
-        // Detect if single item or array
-        let items = [];
-        if (req.body.items && Array.isArray(req.body.items)) {
-            items = req.body.items;
-        } else {
-            items = [req.body]; // Single item as array
-        }
-
-        if (items.length === 0) {
-            return res.status(400).json({ message: 'No items provided' });
+        if (!similar_item_ids || !Array.isArray(similar_item_ids) || similar_item_ids.length === 0) {
+            return res.status(400).json({ message: 'similar_item_ids is required and must be a non-empty array' });
         }
 
         // Check daily limit (3 nodes per day)
@@ -58,76 +39,42 @@ const createNode = async (req, res) => {
             created_at: { $gte: today, $lt: tomorrow }
         });
 
-        if (todayCount + items.length > 3) {
+        if (todayCount >= 3) {
             return res.status(429).json({
                 message: `Daily limit reached. You can create ${3 - todayCount} more nodes today.`,
                 remaining: 3 - todayCount
             });
         }
 
-        // Get week info
         const weekId = getWeekId();
-        const weekStart = getWeekStart();
 
         // Find previous node for linking
-        let previousNode = await Node.findOne({ user_id: userId })
+        const previousNode = await Node.findOne({ user_id: userId })
             .sort({ created_at: -1 });
 
-        const createdNodes = [];
+        const node = await Node.create({
+            user_id: userId,
+            previous_node_id: previousNode ? previousNode._id : null,
+            similar_item_ids,
+            recap_sentence: recap_sentence || null,
+            week_id: weekId
+        });
 
-        for (const item of items) {
-            const { content_type, content_url, text, caption } = item;
-
-            // Validate content_type
-            if (!['text', 'image'].includes(content_type)) {
-                return res.status(400).json({ message: 'content_type must be "text" or "image"' });
-            }
-
-            // Validate content
-            if (content_type === 'text' && !text) {
-                return res.status(400).json({ message: 'Text content is required for text nodes' });
-            }
-            if (content_type === 'image' && !content_url) {
-                return res.status(400).json({ message: 'Image URL is required for image nodes' });
-            }
-
-            // Generate embedding (stub for now)
-            const content = content_type === 'text' ? text : caption || '';
-            const embedding = await modelApi.generateEmbedding(content);
-
-            // Create the node
-            const node = await Node.create({
-                user_id: userId,
-                content_type,
-                content_url: content_type === 'image' ? content_url : null,
-                text: content_type === 'text' ? text : null,
-                caption,
-                embedding,
-                previous_node_id: previousNode ? previousNode._id : null,
-                neighbor_node_ids: [],
-                recap_sentence: null,
-                week_id: weekId
-            });
-
-            createdNodes.push(node);
-            previousNode = node; // Chain nodes together
-        }
-
-        // Find/create track for this week and add all nodes
-        let track = await Track.findOne({ user_id: userId, week_start: weekStart });
+        // Add node to current week's track (create if needed)
+        let track = await Track.findOne({ user_id: userId, week_id: weekId });
         if (!track) {
             track = await Track.create({
                 user_id: userId,
-                week_start: weekStart,
-                node_ids: createdNodes.map(n => n._id)
+                node_ids: [node._id],
+                week_id: weekId
             });
         } else {
-            track.node_ids.push(...createdNodes.map(n => n._id));
+            track.node_ids.push(node._id);
             await track.save();
         }
 
-        // Fire-and-forget: Generate recaps (async, don't wait)
-        for (const node of createdNodes) {
+        // Fire-and-forget: Generate recap if not provided
+        if (!recap_sentence) {
             modelApi.generateRecap(node).then(async (recap) => {
                 if (recap) {
                     await Node.findByIdAndUpdate(node._id, { recap_sentence: recap });
@@ -136,8 +83,8 @@ const createNode = async (req, res) => {
         }
 
         res.status(201).json({
-            message: `${createdNodes.length} node(s) created successfully`,
-            nodes: createdNodes
+            message: 'Node created successfully',
+            node
         });
 
     } catch (error) {
@@ -145,7 +92,6 @@ const createNode = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
-
 
 /**
  * Get a node by ID
@@ -155,7 +101,8 @@ const getNode = async (req, res) => {
     try {
         const node = await Node.findById(req.params.id)
             .populate('user_id', 'username avatar')
-            .populate('previous_node_id');
+            .populate('previous_node_id')
+            .populate('similar_item_ids');
 
         if (!node) {
             return res.status(404).json({ message: 'Node not found' });
@@ -177,6 +124,7 @@ const getUserNodes = async (req, res) => {
     try {
         const userId = req.params.userId;
         const nodes = await Node.find({ user_id: userId })
+            .populate('similar_item_ids')
             .sort({ created_at: -1 })
             .limit(50);
 
@@ -188,8 +136,75 @@ const getUserNodes = async (req, res) => {
     }
 };
 
+/**
+ * Update a node
+ * PUT /api/nodes/:id
+ * Updatable fields: similar_item_ids, recap_sentence
+ */
+const updateNode = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const node = await Node.findById(req.params.id);
+
+        if (!node) {
+            return res.status(404).json({ message: 'Node not found' });
+        }
+
+        if (node.user_id.toString() !== userId) {
+            return res.status(403).json({ message: 'Not authorized to update this node' });
+        }
+
+        const { similar_item_ids, recap_sentence } = req.body;
+
+        if (similar_item_ids !== undefined) node.similar_item_ids = similar_item_ids;
+        if (recap_sentence !== undefined) node.recap_sentence = recap_sentence;
+
+        const updatedNode = await node.save();
+        res.json(updatedNode);
+
+    } catch (error) {
+        console.error('updateNode error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+/**
+ * Delete a node
+ * DELETE /api/nodes/:id
+ */
+const deleteNode = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const node = await Node.findById(req.params.id);
+
+        if (!node) {
+            return res.status(404).json({ message: 'Node not found' });
+        }
+
+        if (node.user_id.toString() !== userId) {
+            return res.status(403).json({ message: 'Not authorized to delete this node' });
+        }
+
+        // Remove node from its track
+        await Track.updateMany(
+            { node_ids: node._id },
+            { $pull: { node_ids: node._id } }
+        );
+
+        await Node.findByIdAndDelete(req.params.id);
+
+        res.json({ message: 'Node deleted successfully' });
+
+    } catch (error) {
+        console.error('deleteNode error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 module.exports = {
     createNode,
     getNode,
-    getUserNodes
+    getUserNodes,
+    updateNode,
+    deleteNode
 };
