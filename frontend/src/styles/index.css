@@ -785,6 +785,70 @@ body {
   margin-top: 0.5rem;
 }
 
+/* Sign-in modal buttons — full-width to match form inputs */
+.signin-modal-form .btn-gradient,
+.signin-modal-panel > .btn-gradient {
+  width: 100%;
+  text-align: center;
+}
+
+.signin-modal-form .btn-gradient > span,
+.signin-modal-panel > .btn-gradient > span {
+  width: 100%;
+}
+
+/* Google sign-in button — icon + text layout */
+.google-signin-btn > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* OR divider */
+.signin-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  color: var(--mid-gray);
+  font-family: var(--font-hand);
+  --fl: 0;
+}
+
+.signin-divider::before,
+.signin-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--charcoal-border);
+}
+
+/* Sign-in / Sign-up toggle */
+.signin-switch-mode {
+  text-align: center;
+  color: var(--mid-gray);
+  margin-top: 1.25rem;
+  --fl: -1;
+}
+
+.signin-switch-mode button {
+  background: none;
+  border: none;
+  color: var(--off-white);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.signin-switch-mode button:hover {
+  color: var(--warm-white);
+}
+
 /* =============================================
    EXPANDED STORY VIEW
    ============================================= */
@@ -1630,22 +1694,32 @@ body {
 .marquee-track {
   display: flex;
   white-space: nowrap;
-  animation: marquee-scroll 20s linear infinite;
+  will-change: transform;
+  animation: marquee-scroll 25s linear infinite;
 }
 
 .marquee-track:hover {
   animation-play-state: paused;
 }
 
+.marquee-group {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  white-space: nowrap;
+}
+
 .marquee-text {
   font-family: var(--font-hand);
   display: inline-block;
+  flex-shrink: 0;
   padding: 0 1rem;
   color: var(--warm-white);
   opacity: 0.85;
 }
 
 .marquee-separator {
+  flex-shrink: 0;
   margin: 0 2rem;
   color: var(--accent-cream);
   user-select: none;
@@ -1673,10 +1747,10 @@ body {
 
 @keyframes marquee-scroll {
   0% {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 

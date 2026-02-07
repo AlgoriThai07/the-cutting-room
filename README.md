@@ -33,7 +33,7 @@ The system writes a story about their life patterns.
 
 ## Core Mechanics
 
-### Daily Posting (Limited)
+### Daily Posting (Limited to 3 Max)
 Users can create up to:
 3 nodes per day
 
@@ -128,7 +128,6 @@ Responsibilities:
 - Interactive timeline visualization
 - Reading weekly story
 - Friend access controls
-- **Deployment**: Hosted on **Aedify.ai** (Vite build)
 
 ---
 
@@ -145,7 +144,6 @@ Core services:
 - Embedding service bridge
 - Neighbor matching service
 - Narrative generation triggers
-- **Deployment**: Hosted on **Aedify.ai** (Auto-detected Node.js environment)
 
 ---
 
@@ -155,7 +153,7 @@ MongoDB stores all social and narrative state.
 
 Collections:
 
-Users
+#### Users
 _id
 username
 email
@@ -164,7 +162,7 @@ friends[]
 current_track_id
 created_at
 
-Nodes
+#### Nodes
 _id
 user_id
 content_type
@@ -177,7 +175,7 @@ recap_sentence
 created_at
 week_id
 
-Tracks
+#### Tracks
 _id
 user_id
 week_start
@@ -192,13 +190,11 @@ generated_at
 ### Storage
 Images stored externally:
 - AWS S3 or Cloudflare R2
-
 Database only keeps URL references.
 
 ---
 
 ## AI + Model Infrastructure
-
 The AI system is NOT inside the React or Express app.  
 It is a separate worker service.
 
@@ -267,15 +263,15 @@ This creates indirect shared storytelling.
 
 Worker sends a prompt to an LLM:
 
-Inputs:
+#### Inputs:
 - node content
 - previous node similarity distance
 - neighbor similarity context
 
-Output:
+#### Output:
 1 reflective sentence
 
-Saved as:
+#### Saved as:
 recap_sentence
 
 ---
@@ -284,7 +280,7 @@ recap_sentence
 
 Runs once per week per user.
 
-Process:
+#### Process:
 
 1) Collect all nodes in the track
 2) Order chronologically
@@ -302,16 +298,16 @@ Results written into the Track document.
 ## UI Behavior
 
 Personal Page:
-- connected node chain
-- animated linking lines
-- recap sentences appear under nodes
+- connected node chain for photo uploading
+- recap sentences appear side by side with per photo recap
 
-Friend View:
-- can read weekly story
+Friend View: (***)
+- can read their pinned stories on Profile
 - can react/comment
 
 Community:
 - similar nodes appear anonymously
+- if 
 
 Visual direction:
 - light theme
@@ -322,9 +318,8 @@ Visual direction:
 ---
 
 ## Limits (Design Constraints)
-
 3 posts/day max  
-40 friends max
+20 friends max
 
 These constraints:
 - prevent feed addiction

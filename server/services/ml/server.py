@@ -104,6 +104,9 @@ async def generate_recap(body: dict):
     similar_descriptions = body.get("similar_item_descriptions", [])
     story_so_far = body.get("story_so_far", "")
 
+    item_index = body.get("item_index", 0)
+    total_items = body.get("total_items", 1)
+
     if not user_description:
         raise HTTPException(status_code=400, detail="user_item_description is required")
 
@@ -111,7 +114,9 @@ async def generate_recap(body: dict):
         recap = generate_recap_sentence(
             user_item_description=user_description,
             similar_item_descriptions=similar_descriptions,
-            story_so_far=story_so_far
+            story_so_far=story_so_far,
+            item_index=item_index,
+            total_items=total_items
         )
         return {"recap_sentence": recap}
     except Exception as e:

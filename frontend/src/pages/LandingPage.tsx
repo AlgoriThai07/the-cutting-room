@@ -10,7 +10,7 @@ import { useAuthStore } from '@/store/authStore.ts'
 
 const scissorsIcon = (
   <div className="scissors-icon" aria-hidden="true">
-    <svg
+    {/* <svg
       width="48"
       height="48"
       viewBox="0 0 64 64"
@@ -21,27 +21,13 @@ const scissorsIcon = (
       <circle cx="18" cy="46" r="8" stroke="#f5f5f0" strokeWidth="2" fill="none" />
       <line x1="24" y1="14" x2="52" y2="40" stroke="#f5f5f0" strokeWidth="2" />
       <line x1="24" y1="50" x2="52" y2="24" stroke="#f5f5f0" strokeWidth="2" />
-    </svg>
+    </svg> */}
   </div>
 )
 
 const featureIcon = (
   <div className="feature-icon d-none d-md-block" aria-hidden="true">
-    <svg
-      width="64"
-      height="80"
-      viewBox="0 0 64 80"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect x="8" y="16" width="48" height="40" rx="4" stroke="#f5f5f0" strokeWidth="2" fill="none" />
-      <rect x="16" y="24" width="10" height="10" rx="1" fill="#f5f5f0" opacity="0.6" />
-      <rect x="30" y="24" width="10" height="10" rx="1" fill="#f5f5f0" opacity="0.6" />
-      <rect x="23" y="38" width="10" height="10" rx="1" fill="#f5f5f0" opacity="0.6" />
-      <rect x="4" y="56" width="56" height="4" rx="1" fill="#f5f5f0" opacity="0.3" />
-      <rect x="8" y="62" width="48" height="4" rx="1" fill="#f5f5f0" opacity="0.2" />
-      <rect x="12" y="68" width="40" height="4" rx="1" fill="#f5f5f0" opacity="0.15" />
-    </svg>
+    <img src="/reel.svg" width="180" height="180" alt="" />
   </div>
 )
 
