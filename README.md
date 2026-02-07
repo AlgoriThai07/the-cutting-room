@@ -1,4 +1,4 @@
-<img width="115" height="130" alt="image" src="https://github.com/user-attachments/assets/bef3426a-d656-4793-84bf-4e7c090e19c5" />
+<img width="115" height="130" alt="image" src="https://github.com/user-attachments/assets/26ef9ab2-90b0-4731-9ea5-009db7be80dc" />
 
 **SPARKHACKS 2026**
 
@@ -12,7 +12,7 @@ A reflective storytelling system that converts weekly user activity into structu
 # One Sentence Pitch
 ```The Cutting Room transforms weekly digital activity into a structured narrative using embeddings and generative AI, helping users understand the story hidden inside their everyday behavior.```
 
-# Operation
+# Operation logic
 <img width="1560" height="1034" alt="image" src="https://github.com/user-attachments/assets/55f96a38-12a4-4247-8d70-630f33b1663b" />
 
 <img width="972" height="1096" alt="image" src="https://github.com/user-attachments/assets/5200f60e-5041-4fa0-9a04-5f04cf802e65" />
