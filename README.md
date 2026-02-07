@@ -1,333 +1,312 @@
-# THE CUTTING ROOM — WEEKLY TRACKS
-## A personal narrative system where your week becomes a story
+<img width="115" height="130" alt="image" src="https://github.com/user-attachments/assets/bef3426a-d656-4793-84bf-4e7c090e19c5" />
+
+**SPARKHACKS 2026**
+
+# PROJECT: THE CUTTING ROOM 
+WEEKLY PERSONALIZED PORTFOLIO UPLOAD
+```where random moments strike into untold narrative masterpieces ...```
+
+**<u>Track 02:<u> Narrative & Interactive Experience**
+A reflective storytelling system that converts weekly user activity into structured narrative insight using embeddings, similarity matching, and generative AI.
+
+# One Sentence Pitch
+```The Cutting Room transforms weekly digital activity into a structured narrative using embeddings and generative AI, helping users understand the story hidden inside their everyday behavior.```
+
+# Operation
+<img width="1560" height="1034" alt="image" src="https://github.com/user-attachments/assets/55f96a38-12a4-4247-8d70-630f33b1663b" />
+
+<img width="972" height="1096" alt="image" src="https://github.com/user-attachments/assets/5200f60e-5041-4fa0-9a04-5f04cf802e65" />
+
+<details>
+<summary><strong>Click to open demo screenshots</strong></summary>
+  <details>
+<summary><strong>Login</strong></summary>
+<br>
+<img width="1436" height="954" alt="image" src="https://github.com/user-attachments/assets/08d02b30-79ee-49d1-9ed8-83c9c59b1194" />
+<br>
+  </details>
+<details>
+<summary><strong>Navigation Bar</strong></summary>
+<br>
+<img width="332" height="582" alt="image" src="https://github.com/user-attachments/assets/efc003b6-14b6-4d6d-8949-106e7e3e7456" />
+<br>
+  </details>
+</details>
+
+
+---
+---
+
+## Team
+```
+Viet Thai Nguyen
+Han Dang
+Minh Khoa Cao
+Hoang Minh Nguyen
+```
+---
+
+## Live Demo Instruction
+
+Deployed on **Aedify.ai**
+
+🔗 [Insert Aedify deployment link here]
+
+To run locally:
+```bash
+git clone <repo-link>
+cd server && npm install && npm run dev
+cd ../frontend && npm install && npm run dev
+source venv/bin/activate && cd server/services/ml && python3 server.py
+```
+---
+
+# Problem
+
+Modern social platforms document events but **do not interpret patterns**.
+
+Users post isolated content:
+* Photos
+* Short text
+* Captions
+
+But platforms rarely answer:
+
+* What themes defined your week?
+* Did your mood shift?
+* How does your experience compare to others?
+
+We wanted to build a system that transforms small moments into structured narrative reflection.
 
 ---
 
-## Concept
+# Solution
 
-The Cutting Room is an interactive storytelling application where users build a weekly chain of posts called a Track.
+The Cutting Room introduces **Weekly Tracks**.
+Instead of a feed, users build a connected chain of posts called **a track**.
 
-Instead of a feed, each user creates a sequence of connected moments.  
-Each moment is a node.
+Each post (Node) contains:
 
-A node contains:
-- one photo OR one text
-- an optional caption
-- a system-generated 1-sentence recap
+* One photo OR one text entry
+* Optional caption
+* AI-generated one-sentence recap
 
-The system connects each node to:
-1) the user’s previous node
-2) visually or semantically similar posts from other users
+Users are limited to:
+* 3 posts per day
+* 20 friends max
 
-Over time, a user’s week becomes a structured narrative rather than a timeline.
+This enforces intentional interaction and reduces performance-driven behavior
 
-At the end of the week, the system generates a story describing:
-- what their week was about
-- how it relates to other people’s experiences
+At **the end of each week**, the system generates:
 
-The user is not writing a diary.
+1. A Personal Story (5–8 sentence behavioral summary)
+2. A Community Reflection (comparative trend analysis)
 
-The system writes a story about their life patterns.
+The result is an interactive narrative shaped by user behavior.
 
 ---
 
-## Core Mechanics
+# Key Features
 
-### Daily Posting (Limited to 3 Max)
-Users can create up to:
-3 nodes per day
+## 1. Intentional Posting Constraints
 
-Each upload:
-- 1 image OR 1 text entry
-- optional caption
-- optional “why this mattered” short phrase
+* 3 posts per day
+* 20 friend limit
+* Weekly reset cycle
 
-This constraint forces meaningful posting rather than spamming.
+These constraints improve narrative pacing and reduce content overload.
 
 ---
 
-### Node Creation
+## 2. Node Linking via Embeddings
 
-Each new node automatically links to:
+Each upload generates a semantic embedding:
+```
+node → embedding → nearest neighbors (kNN)
+```
 
-1) Previous Node (Personal Continuity)
-Creates a personal narrative chain.
+The system links:
 
-2) Similar Community Nodes
-Found using embedding similarity across all users.
+* Current node → previous node (personal continuity)
+* Current node → semantically similar posts (community parallel)
 
-node -> embedding -> nearest neighbors (kNN)
-
-This allows:
-private experience + collective parallel experiences
-
----
-
-### Auto-Generated Recap
-
-Every node receives a one-sentence recap generated by the system.
-
-The recap is not a caption.
-
-It is a narrative reflection.
-
-Example:
-
-User post:
-Photo of empty train platform
-
-System recap:
-“You kept moving but avoided arriving.”
+This creates a structured narrative graph rather than a flat feed.
 
 ---
 
-### Weekly Track
+## 3. AI-Generated Recap Per Node
 
-All nodes created in a week form a Track.
+Each node receives a reflective one-sentence recap generated from:
 
-Track structure:
-Node 1 → Node 2 → Node 3 → ... → Node N
+* Node content
+* Previous-node similarity distance
+* Neighbor context
 
-Visible only to:
-- the user
-- their approved friends (max 40)
-
----
-
-## Weekly Story Generation
-
-At the end of each week the system generates:
-
-### Personal Story
-A 5–8 sentence narrative describing:
-- behavioral patterns
-- emotional shifts
-- recurring imagery
-
-### Social Reflection
-The system compares your track to others during the same week and identifies:
-- shared moods
-- opposite trends
-- collective behaviors
+This creates narrative continuity between moments.
 
 ---
 
-## Technology Stack
+## 4. Weekly Narrative Engine
 
-### Frontend (React)
-- React (Vite)
-- React Router
-- TailwindCSS
-- Framer Motion (node linking animations)
-- Zustand or Redux Toolkit (state management)
-- React Query (server state + caching)
+Weekly batch process:
+```
+1. Collect all nodes in track
+2. Order chronologically
+3. Cluster embeddings
+4. Extract recurring motifs
+5. Compare to global embedding clusters
+6. Generate:
+
+   Personal story
+   Community reflection
+```
+
+Narrative is generated from structural patterns — not just summaries.
+
+---
+
+# Technical Implementation
+
+## Frontend
+
+* React (Vite)
+* TailwindCSS
+* Framer Motion (node linking animation)
+* Zustand / Redux Toolkit
+* React Query
 
 Responsibilities:
-- Uploading posts
-- Viewing node chains
-- Interactive timeline visualization
-- Reading weekly story
-- Friend access controls
+
+* Upload flow
+* Track visualization
+* Friend visibility controls
+* Story display
 
 ---
 
-### Backend (Node.js / Express)
+## Backend
 
-REST API server responsible for:
-- authentication (Google OAuth 2.0)
-- track management
-- node linking
-- AI job scheduling
+* Node.js
+* Express
+* Google OAuth 2.0
+* REST architecture
 
-Core services:
-- Node creation service
-- Embedding service bridge
-- Neighbor matching service
-- Narrative generation triggers
+Services:
 
----
-
-### Database (MongoDB)
-
-MongoDB stores all social and narrative state.
-
-Collections:
-
-#### Users
-_id
-username
-email
-password_hash
-friends[]
-current_track_id
-created_at
-
-#### Nodes
-_id
-user_id
-content_type
-content_url OR text
-caption
-embedding[]
-previous_node_id
-neighbor_node_ids[]
-recap_sentence
-created_at
-week_id
-
-#### Tracks
-_id
-user_id
-week_start
-node_ids[]
-personal_story
-community_story
-theme_vector[]
-generated_at
+* Node creation
+* Track management
+* Async AI job scheduling
+* Permission management
 
 ---
 
-### Storage
-Images stored externally:
-- AWS S3 or Cloudflare R2
-Database only keeps URL references.
+## Database
+
+* MongoDB Atlas
+
+Stores:
+
+* Users
+* Nodes (with embedding vectors)
+* Tracks (weekly narrative state)
 
 ---
 
-## AI + Model Infrastructure
-The AI system is NOT inside the React or Express app.  
-It is a separate worker service.
+## Storage
+
+* AWS S3 or Cloudflare R2 for media
+* Database stores URL references + embeddings
+
+---
+
+## AI Model Service (External Worker)
+
+Separate Python FastAPI service handles:
+
+* Embedding generation
+* Cosine similarity matching
+* kNN neighbor selection
+* LLM recap generation
+* Weekly narrative generation
 
 Architecture:
 
+```
 React Client
    ↓
 Express API (Hosted on Aedify.ai)
    ↓
-Model Service (External Team)
+Model Service (Python / FastAPI)
    ↓
-Database Update
+MongoDB Update
+```
+
+This separation improves modularity and scalability.
+
+---
+## Deployment
+
+The backend API is deployed on **Aedify.ai** for scalable hosting and rapid hackathon deployment.
 
 ---
 
-### Model Service (External Team)
+# Challenges
 
-The Backend (us) communicates with an external Model Service built by the Model Team.
+1. Balancing AI ambition with hackathon time constraints
+2. Ensuring embedding consistency between text and image inputs
+3. Designing constraints (3/day, 20 friends) that improved narrative quality
+4. Coordinating frontend, backend, and model service asynchronously
 
-Responsibilities of Model Team:
-- Hosted API (Python/FastAPI)
-- Embedding generation
-- Similarity matching (kNN)
-- LLM interaction (Recap & Story generation)
-
-Integration:
-- We send HTTP requests to their endpoints.
-- They return processed text/vectors.
+We prioritized stable end-to-end functionality over experimental features.
 
 ---
 
-### Embedding Pipeline
+# Innovation
 
-For each post:
+Unlike journaling apps or social feeds, our system:
 
-Text:
-embedding(text + caption)
+* Uses embeddings to structure narrative relationships
+* Generates stories from behavioral patterns
+* Connects personal activity with anonymous community parallels
+* Applies intentional design constraints to shape user experience
 
-Image:
-image → image caption model → caption → embedding
-
-Embedding stored inside the Node document.
-
-Purpose:
-- detect similarity
-- cluster themes
-- power narrative generation
+We are not generating stories from single posts.
+We are generating stories from structural change over time.
 
 ---
 
-### Neighbor Matching
+# Impact
 
-After embedding is created:
+This project explores:
+```
+  Reflective digital storytelling
+  AI-assisted behavioral insight
+  Reduced-performance social interaction
+  Intentional posting design
+```
+Potential use cases:
+```
+  Student reflection
+  Creative journaling
+  Mental pattern awareness
+  Weekly behavioral insight tracking
+```
+---
 
-1) Compare against recent nodes in the database
-2) Compute cosine similarity
-3) Select top K neighbors
+# What We Learned
 
-neighbor_node_ids[] updated in MongoDB.
-
-This creates indirect shared storytelling.
+* Narrative can emerge from embedding structure
+* Constraints improve user experience
+* Modular AI services improve system reliability
+* Hackathon scope discipline is critical
 
 ---
 
-### Recap Generator
+# Future Improvements
 
-Worker sends a prompt to an LLM:
-
-#### Inputs:
-- node content
-- previous node similarity distance
-- neighbor similarity context
-
-#### Output:
-1 reflective sentence
-
-#### Saved as:
-recap_sentence
+* Monthly and semester-level narrative arcs
+* Mood trajectory visualization
+* More advanced clustering (hierarchical / dynamic K)
+* Personalized long-term trend detection
 
 ---
-
-### Weekly Narrative Engine
-
-Runs once per week per user.
-
-#### Process:
-
-1) Collect all nodes in the track
-2) Order chronologically
-3) Cluster embeddings
-4) Extract recurring motifs
-5) Compare to global clusters
-6) Generate two outputs:
-   - personal story
-   - community reflection
-
-Results written into the Track document.
-
----
-
-## UI Behavior
-
-Personal Page:
-- connected node chain for photo uploading
-- recap sentences appear side by side with per photo recap
-
-Friend View: (***)
-- can read their pinned stories on Profile
-- can react/comment
-
-Community:
-- similar nodes appear anonymously
-- if 
-
-Visual direction:
-- light theme
-- soft colors
-- hand-written style elements
-- non-corporate aesthetic
-
----
-
-## Limits (Design Constraints)
-3 posts/day max  
-20 friends max
-
-These constraints:
-- prevent feed addiction
-- encourage intentional posting
-- create narrative pacing
-
----
-
-## One Sentence Pitch
-
-The Cutting Room turns a week of small moments into a narrative, connecting your experiences to strangers living parallel lives and revealing the story hidden in everyday behavior.
