@@ -41,6 +41,7 @@ const api = {
   getCurrentTrack: () => axiosInstance.get('/tracks/current'),
   getTrackHistory: () => axiosInstance.get('/tracks/history'),
   getTrackById: (id: string) => axiosInstance.get(`/tracks/${id}`),
+  concludeTrack: (id: string) => axiosInstance.post(`/tracks/${id}/conclude`),
 
   // Items & Nodes
   createItem: (formData: FormData) => axiosInstance.post('/items', formData, {

@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
-import SidebarMenu from '@/components/SidebarMenu/SidebarMenu.tsx'
+import { Link, useNavigate } from 'react-router-dom'
 import SignInModal from '@/components/SignInModal/SignInModal.tsx'
 import { useAuthStore } from '@/store/authStore.ts'
 
@@ -11,28 +10,29 @@ interface HeaderProps {
 function Header({ variant = 'landing' }: HeaderProps) {
   const isStory = variant === 'story'
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const [menuOpen, setMenuOpen] = useState(false)
+  const logout = useAuthStore((s) => s.logout)
   const [signInOpen, setSignInOpen] = useState(false)
+  const navigate = useNavigate()
 
-  const openMenu = useCallback(() => setMenuOpen(true), [])
-  const closeMenu = useCallback(() => setMenuOpen(false), [])
   const openSignIn = useCallback(() => setSignInOpen(true), [])
   const closeSignIn = useCallback(() => setSignInOpen(false), [])
+
+  const handleSignOut = useCallback(() => {
+    logout()
+    navigate('/')
+  }, [logout, navigate])
+
+  const NAV_LINKS = [
+    { label: 'Explore', to: '/explore' },
+    { label: 'My Track', to: '/story' },
+    { label: 'Friends', to: '/friends' },
+    { label: 'Profile', to: '/profile' },
+  ]
 
   return (
     <>
       <header className={isStory ? 'story-header' : 'landing-header'}>
         <div className="header-left">
-          <button
-            type="button"
-            className="menu-toggle"
-            onClick={openMenu}
-            aria-label="Open menu"
-          >
-            <span />
-            <span />
-            <span />
-          </button>
           <Link to="/" className="logo-link" aria-label="Go to home">
             <img
               src="/favicon-96x96.png"
@@ -46,13 +46,41 @@ function Header({ variant = 'landing' }: HeaderProps) {
             />
           </Link>
         </div>
-        {isStory || isAuthenticated ? null : (
-          <button type="button" className="btn-gradient btn-signin" onClick={openSignIn}>
-            <span>Sign in / Log in</span>
-          </button>
-        )}
+
+        <nav className="header-nav">
+          {isAuthenticated ? (
+            <ul className="nav-list">
+              {NAV_LINKS.map((link) => (
+                <li key={link.to}>
+                  <Link to={link.to} className="nav-link font-hand">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+              <li>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="nav-link font-hand btn-link"
+                >
+                  Sign Out
+                </button>
+              </li>
+            </ul>
+          ) : (
+            /* Public / Landing State: Show "Sign in" button if NOT on landing page */
+            (!isStory && variant !== 'landing') && (
+              <button
+                type="button"
+                className="btn-gradient btn-signin"
+                onClick={openSignIn}
+              >
+                <span>Sign in / Log in</span>
+              </button>
+            )
+          )}
+        </nav>
       </header>
-      <SidebarMenu isOpen={menuOpen} onClose={closeMenu} />
       <SignInModal isOpen={signInOpen} onClose={closeSignIn} />
     </>
   )

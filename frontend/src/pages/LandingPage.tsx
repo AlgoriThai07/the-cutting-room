@@ -56,14 +56,6 @@ const wavyFooter = (
   </div>
 )
 
-const decorativeLines = (
-  <div className="decorative-lines" aria-hidden="true">
-    <span style={{ width: '100%' }} />
-    <span style={{ width: '85%' }} />
-    <span style={{ width: '92%' }} />
-  </div>
-)
-
 /* ── Component ── */
 
 function LandingPage() {
@@ -90,7 +82,7 @@ function LandingPage() {
       {featureIcon}
 
       <section className="hero-section">
-        {decorativeLines}
+        {/* decorativeLines removed */}
 
         <motion.h1
           className="hero-title fs-xxxl"
@@ -107,7 +99,7 @@ function LandingPage() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
         >
-          <p className="tagline-top fs-s">Impressionism &ndash; Realism</p>
+          {/* <p className="tagline-top fs-s">Impressionism &ndash; Realism</p> */}
           <p className="tagline-body fs-base">
             Where random moments strikes into
             <br />

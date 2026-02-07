@@ -27,13 +27,22 @@ function App() {
   const stopPolling = useNotificationStore((s) => s.stopPolling)
 
   useEffect(() => {
-    const token = searchParams.get('token')
-    if (token) {
-      login(token)
-      // Clean up URL
+    // 1. Check URL for token (OAuth redirect)
+    const urlToken = searchParams.get('token')
+    if (urlToken) {
+      login(urlToken)
       setSearchParams({})
+      return
     }
-  }, [searchParams, login, setSearchParams])
+
+    // 2. Check LocalStorage for existing session
+    const storedToken = localStorage.getItem('cutting-room:token')
+    if (storedToken && !isAuthenticated) {
+      // We have a token but state thinks we're logged out. Re-verify.
+      // We can just call fetchUser directly to validate token
+      useAuthStore.getState().fetchUser()
+    }
+  }, [searchParams, login, setSearchParams, isAuthenticated])
 
   // Start/stop notification polling based on auth state
   useEffect(() => {

@@ -7,10 +7,11 @@ interface TrackState {
   pastTracks: Track[]
   isLoading: boolean
   error: string | null
-  
+
   fetchCurrentTrack: () => Promise<void>
   fetchTrackHistory: () => Promise<void>
   getTracksByOwner: (ownerId: string) => Track[]
+  concludeTrack: (id: string) => Promise<boolean>
 }
 
 const transformTrack = (backendTrack: any): Track => {
@@ -69,8 +70,8 @@ export const useTrackStore = create<TrackState>((set, get) => ({
     try {
       const response = await api.getTrackHistory()
       // backend returns array of tracks
-      const tracks = Array.isArray(response.data) 
-        ? response.data.map(transformTrack) 
+      const tracks = Array.isArray(response.data)
+        ? response.data.map(transformTrack)
         : []
       set({ pastTracks: tracks })
     } catch (err) {
@@ -91,4 +92,17 @@ export const useTrackStore = create<TrackState>((set, get) => ({
     // Filter by ownerId (handling both string ID and potential object ID mismatch if any)
     return all.filter((t) => t.ownerId === ownerId || t.ownerId === ownerId)
   },
+
+  concludeTrack: async (id: string) => {
+    set({ isLoading: true })
+    try {
+      await api.concludeTrack(id)
+      return true
+    } catch (err) {
+      console.error('Failed to conclude track', err)
+      return false
+    } finally {
+      set({ isLoading: false })
+    }
+  }
 }))

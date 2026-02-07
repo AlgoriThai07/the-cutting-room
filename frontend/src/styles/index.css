@@ -13,8 +13,8 @@
   --mid-gray: #7a7a7a;
   --mid-gray-light: #999;
   --accent-cream: #d4cfc8;
-  --font-hand: "Caveat", cursive;
-  --font-body: "Inter", system-ui, sans-serif;
+  --font-hand: "Fraunces", serif;
+  --font-body: "Fraunces", serif;
   --frame-radius: 24px;
 }
 
@@ -77,8 +77,8 @@ body {
 
 .logo-icon {
   display: block;
-  width: clamp(56px, 8vw, 96px);
-  height: clamp(56px, 8vw, 96px);
+  width: clamp(52px, 8vw, 88px);
+  height: clamp(52px, 8vw, 88px);
   border-radius: 50%;
   object-fit: contain;
 }
@@ -95,11 +95,9 @@ body {
 .btn-gradient {
   --color: #3c77b8;
   --fl: 1;
-  background: linear-gradient(
-    to bottom,
-    rgb(from var(--color) r g b / 0.1),
-    rgb(from var(--color) r g b / 0.5)
-  );
+  background: linear-gradient(to bottom,
+      rgb(from var(--color) r g b / 0.1),
+      rgb(from var(--color) r g b / 0.5));
   color: var(--color);
   font-family: var(--font-hand);
   font-weight: 500;
@@ -112,16 +110,14 @@ body {
   display: inline-block;
 }
 
-.btn-gradient > span {
+.btn-gradient>span {
   border-radius: 50vw;
   box-shadow: 0 0 2px 2px rgb(255 255 255 / 1) inset;
   padding: 0.75rem clamp(1.25rem, 3vw, 2rem);
   display: block;
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--color), #fff var(--top-per)),
-    color-mix(in srgb, var(--color), #fff 95%)
-  );
+  background: linear-gradient(to bottom,
+      color-mix(in srgb, var(--color), #fff var(--top-per)),
+      color-mix(in srgb, var(--color), #fff 95%));
   transition: 0.3s ease all;
 }
 
@@ -164,8 +160,8 @@ body {
   position: relative;
 }
 
-/* Fixed viewport frame overlay — always visible regardless of scroll */
-.page-frame::after {
+/* Fixed viewport frame overlay — removed as per request */
+/* .page-frame::after {
   content: "";
   position: fixed;
   inset: 0;
@@ -174,7 +170,7 @@ body {
   box-shadow: 0 0 0 100vmax #1a1a1a;
   pointer-events: none;
   z-index: 9999;
-}
+} */
 
 /* =============================================
    PAGE 1: LANDING / HERO
@@ -183,14 +179,17 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: var(--frame-radius);
+  /* border-radius: var(--frame-radius); */
 }
 
 .landing-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: clamp(0.5rem, 1.5vw, 1rem) clamp(1rem, 3vw, 2rem);
+  /* Reduced padding to shrink height by ~30% */
+  padding: clamp(0.25rem, 1vw, 0.5rem) clamp(1rem, 3vw, 2rem);
+  font-size: 1.25rem;
+  /* Increased text size by ~20% */
   position: relative;
   z-index: 10;
 }
@@ -215,23 +214,7 @@ body {
   z-index: 5;
 }
 
-.decorative-lines {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: clamp(1rem, 2vw, 1.5rem);
-  width: calc(100vw - 4px);
-  margin-left: calc(-1 * clamp(2rem, 5vw, 4rem));
-  margin-right: calc(-1 * clamp(2rem, 5vw, 4rem));
-}
-
-.decorative-lines span {
-  display: block;
-  height: 1.5px;
-  background-color: var(--off-white);
-  opacity: 0.6;
-}
+/* decorative-lines removed */
 
 .hero-title {
   font-family: var(--font-hand);
@@ -298,8 +281,16 @@ body {
 /* =============================================
    PAGE 2: STORY PAGE
    ============================================= */
+/* Standardized header styles */
+/* Standardized header styles */
 .story-header {
-  padding: clamp(0.4rem, 1vw, 0.75rem) clamp(1rem, 3vw, 2rem);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* Reduced padding to shrink height by ~30% */
+  padding: clamp(0.25rem, 1vw, 0.5rem) clamp(1rem, 3vw, 2rem);
+  font-size: 1.25rem;
+  /* Increased text size by ~20% */
   border-bottom: 1px solid var(--charcoal-border);
   position: sticky;
   top: 0;
@@ -328,6 +319,45 @@ body {
 .parallax-section {
   position: relative;
   align-items: flex-start;
+}
+
+.story-controls {
+  padding: 0 clamp(1rem, 3vw, 2rem);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.empty-story-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 40vh;
+  color: var(--mid-gray-light);
+  font-family: var(--font-hand);
+  font-size: 2rem;
+  text-align: center;
+  opacity: 0.6;
+}
+
+.blinking-dots {
+  animation: blink 1.5s infinite;
+  display: inline-block;
+  margin-left: 4px;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 0.2;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.2;
+  }
 }
 
 .parallax-section .col-6 {
@@ -787,18 +817,18 @@ body {
 
 /* Sign-in modal buttons — full-width to match form inputs */
 .signin-modal-form .btn-gradient,
-.signin-modal-panel > .btn-gradient {
+.signin-modal-panel>.btn-gradient {
   width: 100%;
   text-align: center;
 }
 
-.signin-modal-form .btn-gradient > span,
-.signin-modal-panel > .btn-gradient > span {
+.signin-modal-form .btn-gradient>span,
+.signin-modal-panel>.btn-gradient>span {
   width: 100%;
 }
 
 /* Google sign-in button — icon + text layout */
-.google-signin-btn > span {
+.google-signin-btn>span {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1749,21 +1779,27 @@ body {
   0% {
     transform: translate3d(0, 0, 0);
   }
+
   100% {
     transform: translate3d(-50%, 0, 0);
   }
 }
 
 @keyframes scissors-cut {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: rotate(0deg);
   }
+
   25% {
     transform: rotate(8deg);
   }
+
   50% {
     transform: rotate(0deg);
   }
+
   75% {
     transform: rotate(-8deg);
   }
@@ -1773,6 +1809,7 @@ body {
    ANIMATIONS
    ============================================= */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -1897,4 +1934,115 @@ body {
   .finish-track-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* ── Story Controls ── */
+.story-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: auto;
+  margin: 2rem;
+  padding: 0 1rem;
+}
+
+.controls-left {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-control {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--warm-white);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-control:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.node-counter {
+  font-size: var(--fs-s);
+  color: var(--warm-white);
+  opacity: 0.8;
+}
+
+/* ── Floating Action Button (FAB) ── */
+.btn-fab-upload {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  line-height: 1;
+  padding: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-fab-upload:hover {
+  transform: scale(1.1) rotate(90deg);
+}
+
+.btn-fab-upload span {
+  position: relative;
+  top: -2px;
+}
+
+/* Remove old upload section if present */
+.upload-section {
+  display: none;
+}
+
+/* ── Header Navigation ── */
+.header-nav {
+  display: flex;
+  align-items: center;
+}
+
+.nav-list {
+  display: flex;
+  list-style: none;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+.nav-link {
+  color: var(--mid-gray-light);
+  text-decoration: none;
+  font-size: var(--fs-s);
+  transition: color 0.2s ease, transform 0.2s ease;
+  display: block;
+}
+
+.nav-link:hover {
+  color: var(--off-white);
+  transform: translateY(-1px);
+}
+
+.nav-link.active {
+  color: var(--off-white);
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 }
