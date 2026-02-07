@@ -128,6 +128,7 @@ Responsibilities:
 - Interactive timeline visualization
 - Reading weekly story
 - Friend access controls
+- **Deployment**: Hosted on **Aedify.ai** (Vite build)
 
 ---
 
@@ -144,6 +145,7 @@ Core services:
 - Embedding service bridge
 - Neighbor matching service
 - Narrative generation triggers
+- **Deployment**: Hosted on **Aedify.ai** (Auto-detected Node.js environment)
 
 ---
 
@@ -204,33 +206,27 @@ Architecture:
 
 React Client
    ↓
-Express API
+Express API (Hosted on Aedify.ai)
    ↓
-Job Queue
-   ↓
-AI Worker
+Model Service (External Team)
    ↓
 Database Update
 
 ---
 
-### Worker Service
+### Model Service (External Team)
 
-A background worker handles:
-- embedding generation
-- similarity matching
-- recap generation
-- weekly story writing
+The Backend (us) communicates with an external Model Service built by the Model Team.
 
-Possible implementation:
-Node.js worker OR Python FastAPI worker
+Responsibilities of Model Team:
+- Hosted API (Python/FastAPI)
+- Embedding generation
+- Similarity matching (kNN)
+- LLM interaction (Recap & Story generation)
 
-Communicates with the main server via a job queue.
-
-Queue options:
-- BullMQ (Redis)
-- RabbitMQ
-- Cloud task queue
+Integration:
+- We send HTTP requests to their endpoints.
+- They return processed text/vectors.
 
 ---
 
