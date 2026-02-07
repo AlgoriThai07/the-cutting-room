@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Header from '@/components/Header/Header.tsx'
@@ -39,84 +40,122 @@ const wavyDivider = (
 
 function StoryRecapPage() {
   const navigate = useNavigate()
-  const pastTracks = useTrackStore((s) => s.pastTracks)
-  const track = pastTracks[0]
+  const { pastTracks, fetchTrackHistory, isLoading } = useTrackStore()
+
+  useEffect(() => {
+    fetchTrackHistory()
+  }, [fetchTrackHistory])
+
+  // Get the most recent concluded track
+  const track = pastTracks.find(t => t.status === 'completed')
+
+  if (isLoading && !track) {
+    return (
+      <div className="page-frame recap-page">
+        <Header variant="story" />
+        <div className="recap-body">
+          <p className="fs-base" style={{ textAlign: 'center', marginTop: '4rem', color: 'var(--warm-white)' }}>
+            Loading your story...
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="page-frame recap-page">
       <Header variant="story" />
 
       <div className="recap-body">
-        {/* Variant A: Left unfinished */}
-        <motion.section
-          className="recap-section recap-unfinished"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: 'easeOut' }}
-        >
-          {scissorsIcon}
+        {/* Variant A: Left unfinished (Raw Narrative) */}
+        {!track?.communityReflection && (
+          <motion.section
+            className="recap-section recap-unfinished"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
+          >
+            {scissorsIcon}
 
-          <h2 className="recap-title font-hand fs-xxl">
-            Listening to what you left unfinished...
-          </h2>
+            <h2 className="recap-title font-hand fs-xxl">
+              Listening to what you left unfinished...
+            </h2>
 
-          <div className="recap-narrative">
-            {track ? (
-              track.narrative.map((para, i) => (
-                <p key={i} className="fs-base">{para}</p>
-              ))
-            ) : (
-              <>
-                <p className="fs-base">
-                  The frames you left behind this week carry a weight that finished work rarely does.
-                  There is something honest about an incomplete sequence — it admits that the story is still happening,
-                  still unfolding beyond the edges of what you chose to capture.
-                </p>
-                <p className="fs-base">
-                  The cutting room does not demand closure. It holds your fragments and waits.
-                  Sometimes the most powerful narrative is the one that stays open,
-                  that refuses the comfort of a tidy ending.
-                </p>
-              </>
-            )}
-          </div>
-        </motion.section>
-
-        {/* Variant B: The Cutting Room recap */}
-        <motion.section
-          className="recap-section recap-polished"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }}
-        >
-          {scissorsIcon}
-
-          <h2 className="recap-title font-hand fs-xxl">
-            The Cutting Room
-          </h2>
-          <p className="recap-tagline font-hand fs-s">
-            Impressionism &ndash; Realism
-          </p>
-
-          <div className="recap-narrative">
-            <p className="fs-base">
-              Where random moments strikes into untold narrative and personal experiences.
-              Your week has been assembled, cut, and arranged into something that resembles meaning.
-            </p>
-            {track ? (
-              <>
-                <p className="fs-base recap-pinned">{track.pinnedSentence}</p>
-                {track.narrative.map((para, i) => (
+            <div className="recap-narrative">
+              {track ? (
+                track.narrative.map((para, i) => (
                   <p key={i} className="fs-base">{para}</p>
-                ))}
-              </>
-            ) : (
-              <p className="fs-base">
-                No completed tracks yet. Begin your journey by uploading moments to your current track.
+                ))
+              ) : (
+                <>
+                  <p className="fs-base">
+                    The frames you left behind this week carry a weight that finished work rarely does.
+                    There is something honest about an incomplete sequence — it admits that the story is still happening,
+                    still unfolding beyond the edges of what you chose to capture.
+                  </p>
+                  <p className="fs-base">
+                    The cutting room does not demand closure. It holds your fragments and waits.
+                    Sometimes the most powerful narrative is the one that stays open,
+                    that refuses the comfort of a tidy ending.
+                  </p>
+                </>
+              )}
+            </div>
+          </motion.section>
+        )}
+
+        {/* Variant B: The Cutting Room recap (With Reflection) */}
+        {track?.communityReflection && (
+          <motion.section
+            className="recap-section recap-polished"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }}
+          >
+            {scissorsIcon}
+
+            <h2 className="recap-title font-hand fs-xxl">
+              The Cutting Room
+            </h2>
+            <p className="recap-tagline font-hand fs-s">
+              Impressionism &ndash; Realism
+            </p>
+
+            <div className="recap-narrative">
+              <p className="fs-base font-italic" style={{ marginBottom: '2rem', opacity: 0.9 }}>
+                "{track.communityReflection}"
               </p>
-            )}
-          </div>
-        </motion.section>
+
+              {track.pinnedSentence && (
+                <p className="fs-base recap-pinned">{track.pinnedSentence}</p>
+              )}
+
+              {track.narrative.map((para, i) => (
+                <p key={i} className="fs-base">{para}</p>
+              ))}
+            </div>
+          </motion.section>
+        )}
+
+        {/* Fallback if no specific track found */}
+        {!track && (
+          <motion.section
+            className="recap-section recap-unfinished"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
+          >
+            {scissorsIcon}
+            <h2 className="recap-title font-hand fs-xxl">
+              No stories told yet.
+            </h2>
+            <div className="recap-narrative">
+              <p className="fs-base">
+                Begin your journey by uploading moments to your current track.
+              </p>
+            </div>
+          </motion.section>
+        )}
       </div>
 
       {wavyDivider}

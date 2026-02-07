@@ -63,6 +63,7 @@ export interface Track {
   nodes: TrackNode[]
   narrative: string[]
   pinnedSentence: string
+  communityReflection?: string
   upvotes: number
   downvotes: number
   commentsCount: number

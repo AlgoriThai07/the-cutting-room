@@ -38,6 +38,7 @@ const transformTrack = (backendTrack: any): Track => {
     nodes,
     narrative: backendTrack.story ? [backendTrack.story] : [],
     pinnedSentence: backendTrack.story ? backendTrack.story.slice(0, 50) + '...' : '',
+    communityReflection: backendTrack.community_reflection || '',
     upvotes: 0,
     downvotes: 0,
     commentsCount: 0,
