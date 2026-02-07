@@ -1,4 +1,5 @@
 <img width="115" height="130" alt="image" src="https://github.com/user-attachments/assets/26ef9ab2-90b0-4731-9ea5-009db7be80dc" />
+<img width="115" height="130" alt="image" src="https://github.com/user-attachments/assets/c9c8766d-112d-4c5e-9fed-b39a0ea33e81" />
 
 **SPARKHACKS 2026**
 
